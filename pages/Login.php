@@ -2,7 +2,6 @@
     require 'Database.php';
     require 'QueryLogin.php';
 
-    session_start();
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
@@ -17,8 +16,9 @@
             
             $_SESSION['user_id'] = $utente['ID'];
             $_SESSION['username'] = $utente['Username'];
+            $_SESSION['avatar_url'] = "https://ui-avatars.com/api/?name=" . urlencode($_SESSION['username']) . "&background=8b5cf6&color=fff";
 
-            header('Location: Home.php');
+            header('Location: /Pulse/home');
             exit();
         } else {
             $errore = "Credenziali errate";
@@ -45,7 +45,7 @@
         </form>
 
         <div>
-            Non hai un account? <a href="Registrazione.php">Registrati qui</a>
+            Non hai un account? <a href="/Pulse/register">Registrati qui</a>
         </div>
     </body>
 </html>

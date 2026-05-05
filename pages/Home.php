@@ -1,16 +1,4 @@
 <?php
-    session_start();
-
-    // PROTEZIONE: Se l'utente non è loggato, rimanda al login
-    if (!isset($_SESSION['user_id'])) {
-        header("Location: Login.php");
-        exit();
-    }
-
-    // Dati reali dalla sessione
-    $currentUsername = $_SESSION['username'];
-    $avatarUrl = "https://ui-avatars.com/api/?name=" . urlencode($currentUsername) . "&background=8b5cf6&color=fff";
-
     // --- MOCK FEED (rimane invariato per ora) ---
     $feed = [
         [
@@ -33,43 +21,10 @@
     }
 ?>
 
-<!doctype html>
-<html lang="it">
-    <head>
-        <meta charset="utf-8">
-        <title>Pulse • Home</title>
-        <link rel="stylesheet" href="../CSS/Home.css">
-    </head>
-    <body>
+
 
     <div class="app">
-        <aside class="left">
-            <div class="brand">
-                <div class="logo"></div>
-                <h1>Pulse</h1>
-            </div>
-
-            <nav class="nav">
-                <a class="active" href="home.php"><span class="ico">⌂</span><span class="label">Home</span></a>
-                <a href="cerca.php"><span class="ico">⌕</span><span class="label">Cerca</span></a>
-                <a href="community.php"><span class="ico">👥</span><span class="label">Community</span></a>
-                <a href="crea.php"><span class="ico">＋</span><span class="label">Crea</span></a>
-                <a href="notifiche.php"><span class="ico">🔔</span><span class="label">Notifiche</span></a>
-                <a href="liste.php"><span class="ico">≡</span><span class="label">Liste</span></a>
-                <a href="recensioni.php"><span class="ico">✍</span><span class="label">Recensioni</span></a>
-                <a href="profilo.php"><span class="ico">☺</span><span class="label">Profilo</span></a>
-            </nav>
-
-            <div style="flex:1"></div>
-
-            <div class="me">
-                <img class="avatar" src="<?= $avatarUrl ?>" alt="Avatar">
-                <div class="meta">
-                    <strong>@<?= htmlspecialchars($currentUsername) ?></strong>
-                    <a href="logout.php" style="font-size: 11px; color: var(--danger)">Log out</a>
-                </div>
-            </div>
-        </aside>
+        <?php include "aside.php"; ?>
 
         <main class="center">
             <?php foreach ($feed as $p): ?>
@@ -107,6 +62,3 @@
             });
         });
     </script>
-
-    </body>
-</html>

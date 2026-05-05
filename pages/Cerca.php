@@ -1,7 +1,6 @@
 <?php
-    session_start();
     if (!isset($_SESSION['user_id'])) {
-        header("Location: Login.php");
+        header("Location: /Pulse/login");
         exit();
     }
 
@@ -33,7 +32,7 @@
                 $anno = !empty($f['release_date']) ? substr($f['release_date'], 0, 4) : "N.D.";
                 
                 $risultatiHTML .= "
-                <div class='film-card' onclick=\"location.href='crea_log.php?tmdb_id={$f['id']}'\">
+                <div class='film-card' onclick=\"location.href='/Pulse/crea_log.php?tmdb_id={$f['id']}'\">
                     <img src='$poster' alt='Poster'>
                     <div class='film-info'>
                         <strong>" . htmlspecialchars($f['title']) . "</strong>
@@ -52,38 +51,22 @@
 <head>
     <meta charset="utf-8">
     <title>Pulse • Cerca</title>
-    <link rel="stylesheet" href="../CSS/Home.css">
-    <link rel="stylesheet" href="../CSS/Cerca.css">
+    <link rel="stylesheet" href="CSS/Cerca.css">
 </head>
 <body>
 
 <div class="app">
-    <aside class="left">
-        <div class="brand">
-            <div class="logo"></div>
-            <h1>Pulse</h1>
-        </div>
-        <nav class="nav">
-            <a href="home.php"><span class="ico">⌂</span><span class="label">Home</span></a>
-            <a class="active" href="cerca.php"><span class="ico">⌕</span><span class="label">Cerca</span></a>
-            <a href="community.php"><span class="ico">👥</span><span class="label">Community</span></a>
-            <a href="crea.php"><span class="ico">＋</span><span class="label">Crea</span></a>
-            <a href="notifiche.php"><span class="ico">🔔</span><span class="label">Notifiche</span></a>
-            <a href="liste.php"><span class="ico">≡</span><span class="label">Liste</span></a>
-            <a href="recensioni.php"><span class="ico">✍</span><span class="label">Recensioni</span></a>
-            <a href="profilo.php"><span class="ico">☺</span><span class="label">Profilo</span></a>
-        </nav>
-    </aside>
+    <?php require 'aside.php'; ?>
 
     <main class="center">
         <section class="search-header">
             <div class="search-tabs">
-                <a href="Cerca.php" class="tab active">Film</a>
-                <a href="CercaUtenti.php" class="tab">Utenti</a>
+                <a href="/Pulse/cerca" class="tab active">Film</a>
+                <a href="/Pulse/cerca-utenti" class="tab">Utenti</a>
             </div>
 
             <h2>Cerca un film</h2>
-            <form action="cerca.php" method="GET" class="search-form">
+            <form action="/Pulse/cerca" method="GET" class="search-form">
                 <input type="text" name="q" class="search-input" 
                     placeholder="Titolo del film..." 
                     value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" required>
