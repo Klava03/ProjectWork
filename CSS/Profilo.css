@@ -1,0 +1,121 @@
+.profile-header {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.profile-main-info {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.profile-lg-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    object-fit: cover;
+}
+
+.profile-text h2 {
+    font-size: 28px;
+    margin-bottom: 5px;
+}
+
+.bio {
+    color: var(--muted);
+    margin-bottom: 15px;
+    max-width: 500px;
+}
+
+.btn-edit {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    transition: 0.2s;
+}
+
+.btn-edit:hover {
+    background: var(--line);
+}
+
+.profile-stats {
+    display: flex;
+    gap: 40px;
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat .num {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.stat .lab {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+/* LISTA LOG */
+.log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.log-card {
+    display: flex;
+    gap: 20px;
+    background: var(--panel);
+    padding: 15px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+}
+
+.log-poster {
+    width: 70px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.log-details h4 {
+    margin-bottom: 5px;
+}
+
+.log-details h4 span {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.rating {
+    color: var(--accent);
+    margin-bottom: 8px;
+}
+
+.review-text {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.date {
+    color: var(--muted);
+    font-size: 12px;
+}
