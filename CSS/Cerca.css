@@ -1,3 +1,7 @@
+/* ═══════════════════════════════════════════════
+   PULSE — CERCA  (stile Letterboxd per risultati)
+   ═══════════════════════════════════════════════ */
+
 /* --- LAYOUT AREA RICERCA --- */
 .search-header {
     background: var(--panel);
@@ -41,7 +45,7 @@
 }
 
 .search-tabs .tab.active {
-    color: var(--accent); /* Il viola di Pulse */
+    color: var(--accent);
     background: rgba(139, 92, 246, 0.15);
     box-shadow: 0 4px 15px rgba(139, 92, 246, 0.1);
 }
@@ -62,12 +66,14 @@
     background: rgba(0, 0, 0, 0.2);
     color: white;
     font-size: 16px;
+    font-family: inherit;
     outline: none;
-    transition: border-color 0.3s;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .search-input:focus {
     border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, .10);
 }
 
 .search-btn {
@@ -77,6 +83,7 @@
     border: none;
     border-radius: 12px;
     font-weight: 600;
+    font-family: inherit;
     cursor: pointer;
     transition: transform 0.2s, filter 0.2s;
 }
@@ -86,7 +93,195 @@
     transform: scale(1.02);
 }
 
-/* --- STATI VUOTI / ERRORI --- */
+/* --- ANIMAZIONE DI ENTRATA --- */
+main.center {
+    animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════
+   GRIGLIA FILM — stile Letterboxd
+   Poster 2:3, overlay info all'hover
+   ═══════════════════════════════════════════════ */
+
+.grid-risultati {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+    gap: 10px;
+}
+
+.film-card {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--panel);
+}
+
+/* Poster */
+.film-card img {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.film-card:hover img {
+    transform: scale(1.05);
+}
+
+/* Overlay che sale dal basso */
+.film-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 36px 8px 10px;
+    background: linear-gradient(to top, rgba(0,0,0,0.93) 0%, transparent 100%);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+}
+
+.film-card:hover .film-info {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.film-info strong {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.35;
+    margin-bottom: 3px;
+}
+
+.film-info small {
+    font-size: 10px;
+    color: var(--muted);
+}
+
+/* Bordo accent violet all'hover */
+.film-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--accent);
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+}
+
+.film-card:hover::after {
+    opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════
+   RISULTATI UTENTI — stile Letterboxd
+   Lista con divisori, avatar quadrato, follow btn
+   ═══════════════════════════════════════════════ */
+
+.user-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 8px;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    border-radius: 0;
+    transition: background 0.15s, padding 0.15s;
+    cursor: pointer;
+}
+
+.user-card:first-child {
+    border-top: 1px solid var(--line);
+}
+
+.user-card:hover {
+    background: rgba(255, 255, 255, 0.025);
+    border-radius: 8px;
+    border-color: transparent;
+}
+
+/* Avatar quadrato — stile LB */
+.user-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--line);
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.username {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bio {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Pulsante segui compatto */
+.follow-btn {
+    flex-shrink: 0;
+    padding: 6px 16px;
+    border: 1px solid rgba(139, 92, 246, 0.45);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--accent);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+}
+
+.follow-btn:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.follow-btn.following {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* --- STATI VUOTI --- */
 .no-results {
     text-align: center;
     padding: 50px;
@@ -95,35 +290,202 @@
     grid-column: 1 / -1;
 }
 
-/* --- ANIMAZIONE DI ENTRATA --- */
-main.center {
-    animation: slideUp 0.4s ease-out;
-}
+/* ═══════════════════════════════════════════════
+   CAST & CREW
+   ═══════════════════════════════════════════════ */
 
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.grid-risultati {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 20px;
-}
-
-.user-list {
+.cast-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    max-width: 700px;
-    margin: 0 auto;
 }
-.user-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    padding: 15px;
-    border-radius: 15px;
+
+.cast-card {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 14px;
+    padding: 14px 8px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    transition: background 0.15s, border-radius 0.15s;
+}
+
+.cast-card:first-child { border-top: 1px solid var(--line); }
+
+.cast-card:hover {
+    background: rgba(255,255,255,0.025);
+    border-radius: 8px;
+    border-color: transparent;
+}
+
+.cast-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--line);
+}
+
+.cast-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.cast-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.cast-dept {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.cast-known {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ═══════════════════════════════════════════════
+   COMMUNITY
+   ═══════════════════════════════════════════════ */
+
+.community-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.community-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.community-card:hover {
+    border-color: rgba(139, 92, 246, 0.35);
+    transform: translateX(4px);
+}
+
+.community-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    color: var(--accent);
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.community-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.community-nome {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.community-genere {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.community-desc {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ═══════════════════════════════════════════════
+   LISTE
+   ═══════════════════════════════════════════════ */
+
+.liste-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.lista-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 8px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    transition: background 0.15s, border-radius 0.15s;
+}
+
+.lista-card:first-child { border-top: 1px solid var(--line); }
+
+.lista-card:hover {
+    background: rgba(255,255,255,0.025);
+    border-radius: 8px;
+    border-color: transparent;
+}
+
+.lista-cover {
+    width: 42px;
+    height: 63px;       /* ratio 2:3 */
+    border-radius: 3px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--line);
+}
+
+.lista-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.lista-titolo {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.lista-meta {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.lista-desc {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

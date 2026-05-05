@@ -42,7 +42,7 @@ $pagine = [
 
 <aside class="left">
     <div class="brand">
-        <div class="logo"></div>
+        <div class="auth-logo"></div>
         <h1>Pulse</h1>
     </div>
 

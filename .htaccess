@@ -1,8 +1,9 @@
 RewriteEngine On
-
 RewriteBase /Pulse/
 
+# Passa file e cartelle reali direttamente (CSS, immagini, ecc.)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
-RewriteRule ^ index.php [L]
+# Riscrive tutto verso index.php conservando il path come PATH_INFO
+RewriteRule ^(.*)$ index.php/$1 [L,QSA]
