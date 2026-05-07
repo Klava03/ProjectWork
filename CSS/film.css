@@ -1,0 +1,480 @@
+/* ═══════════════════════════════════════════════
+   PULSE — FILM DETAIL  (Letterboxd-inspired)
+   ═══════════════════════════════════════════════ */
+
+.film-app {
+    grid-template-columns: var(--w-left) 1fr !important;
+}
+
+/* ── HERO BACKDROP ─────────────────────────── */
+.film-hero {
+    height: 340px;
+    max-width: 100%;
+    background-size: cover;
+    background-position: center 25%;
+    border-radius: var(--radius);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: -140px;
+    /* impedisce che la backdrop sfori il contenitore */
+    contain: layout style;
+}
+
+.film-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(11,13,18,0)    0%,
+        rgba(11,13,18,0.55) 55%,
+        rgba(11,13,18,1)   100%
+    );
+}
+
+/* ── FILM HEADER (poster + info) ───────────── */
+.film-header {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    position: relative;
+    z-index: 2;
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--line);
+}
+
+.film-poster-wrap {
+    flex-shrink: 0;
+}
+
+.film-poster {
+    width: 220px;
+    border-radius: 10px;
+    box-shadow: 0 24px 64px rgba(0,0,0,.7);
+    display: block;
+}
+
+.film-meta {
+    flex: 1;
+    min-width: 0;
+    padding-top: 90px;
+}
+
+/* Title + year */
+.film-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.film-title {
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--text);
+}
+
+.film-year {
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--muted);
+    flex-shrink: 0;
+}
+
+.film-original-title {
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 16px;
+}
+
+/* Directed by */
+.film-directed-by {
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.film-directed-by .crew-link {
+    color: var(--text);
+    font-weight: 700;
+    text-decoration: none;
+    transition: color .2s;
+}
+
+.film-directed-by .crew-link:hover { color: var(--accent); }
+
+/* Genre + runtime tags */
+.film-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.tag {
+    padding: 4px 13px;
+    border-radius: 20px;
+    background: rgba(139,92,246,.13);
+    border: 1px solid rgba(139,92,246,.28);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.tag-neutral {
+    background: rgba(255,255,255,.04);
+    border-color: var(--line);
+    color: var(--muted);
+}
+
+/* Overview */
+.film-overview {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--muted);
+    max-width: 640px;
+    margin-bottom: 26px;
+}
+
+/* TMDB score + user rating row */
+.film-scores {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    margin-bottom: 24px;
+}
+
+.score-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    color: var(--text);
+    font-size: 17px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.score-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.score-meta strong {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text);
+}
+
+.score-meta small {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+/* Action buttons */
+.film-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.04);
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    text-decoration: none;
+    line-height: 1;
+}
+
+.action-btn i { font-size: 16px; }
+
+.action-btn:hover {
+    background: rgba(255,255,255,.08);
+    color: var(--text);
+    border-color: rgba(255,255,255,.15);
+}
+
+.action-btn.active {
+    background: rgba(139,92,246,.18);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.action-btn.active-heart {
+    background: rgba(239,68,68,.12);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.action-btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff !important;
+}
+
+.action-btn-primary:hover {
+    filter: brightness(1.12);
+    background: var(--accent) !important;
+}
+
+/* ── HALF-STAR PICKER (Film detail page) ───── */
+.star-rating {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* ogni "stella" nel picker */
+.star-btn {
+    font-size: 28px;
+    color: rgba(255,255,255,.12);
+    cursor: pointer;
+    line-height: 1;
+    user-select: none;
+    transition: transform .1s;
+    /* larghezza esplicita per rilevare il lato sinistro/destro via JS */
+    display: inline-block;
+    width: 1em;
+    text-align: center;
+}
+
+.star-btn:hover { transform: scale(1.15); }
+
+/* stati: piena / mezza / hover */
+.star-btn.s-full { color: var(--accent); }
+.star-btn.s-half {
+    background: linear-gradient(90deg, var(--accent) 50%, rgba(255,255,255,.12) 50%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.star-btn.s-hover-full { color: rgba(139,92,246,.65); }
+.star-btn.s-hover-half {
+    background: linear-gradient(90deg, rgba(139,92,246,.65) 50%, rgba(255,255,255,.12) 50%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.star-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: 10px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    min-width: 80px;
+}
+
+/* ── HALF-STAR DISPLAY (lettura, non picker) ─ */
+.stars-display { display: inline-flex; gap: 1px; line-height: 1; }
+.sd-star        { font-size: inherit; color: rgba(255,255,255,.12); }
+.sd-star.full   { color: var(--accent); }
+.sd-star.half   {
+    background: linear-gradient(90deg, var(--accent) 50%, rgba(255,255,255,.12) 50%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ── GENERIC SECTION ───────────────────────── */
+.film-section {
+    padding-top: 32px;
+    margin-top: 4px;
+    border-top: 1px solid var(--line);
+}
+
+.section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 22px;
+}
+
+/* ── CAST GRID (wrapping, no horizontal scroll) */
+.cast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    gap: 16px 12px;
+}
+
+.cast-card-film {
+    width: 100%;          /* si adatta alla colonna della grid */
+    text-decoration: none;
+    color: inherit;
+    transition: transform .2s;
+    display: block;
+}
+
+.cast-card-film:hover { transform: translateY(-5px); }
+
+.cast-card-film:hover .cast-card-photo {
+    box-shadow: 0 8px 24px rgba(139,92,246,.35);
+}
+
+.cast-card-photo {
+    width: 100%;          /* si adatta alla colonna */
+    aspect-ratio: 2/3;   /* mantiene proporzioni senza altezza fissa */
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+    margin-bottom: 8px;
+    background: var(--panel2);
+    transition: box-shadow .2s;
+}
+
+.cast-card-info strong {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 2px;
+}
+
+.cast-card-info span {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.3;
+}
+
+/* ── CREW GRID ─────────────────────────────── */
+.crew-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 28px 20px;
+}
+
+.crew-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.crew-group-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.crew-member-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    transition: color .2s;
+}
+
+.crew-member-link:hover { color: var(--accent); }
+
+/* ── SIMILAR FILMS ─────────────────────────── */
+.similar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    gap: 10px;
+}
+
+.similar-card {
+    display: block;
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    text-decoration: none;
+    background: var(--panel);
+    transition: transform .25s;
+}
+
+.similar-card:hover { transform: scale(1.04); }
+
+.similar-card img {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+}
+
+.similar-info {
+    position: absolute;
+    inset: 0;
+    padding: 32px 8px 8px;
+    background: linear-gradient(to top, rgba(0,0,0,.92) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity .22s;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.similar-card:hover .similar-info { opacity: 1; }
+
+.similar-info strong {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    margin-bottom: 2px;
+}
+
+.similar-info small {
+    font-size: 10px;
+    color: var(--muted);
+}
+
+/* ── DETAILS TABLE (country, language, etc.) ─ */
+.film-details-table {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 18px;
+}
+
+.fd-item { display: flex; flex-direction: column; gap: 3px; }
+
+.fd-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.fd-value {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+}
+
+/* ── RESPONSIVE ────────────────────────────── */
+@media (max-width: 768px) {
+    .film-header { flex-direction: column; gap: 20px; }
+    .film-poster { width: 160px; }
+    .film-poster-wrap { margin: 0 auto; }
+    .film-meta { padding-top: 0; }
+    .film-title { font-size: 24px; }
+    .film-hero { height: 220px; margin-bottom: -70px; }
+    .cast-grid { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); }
+}

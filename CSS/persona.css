@@ -1,0 +1,185 @@
+/* ═══════════════════════════════════════════════
+   PULSE — PERSONA DETAIL (attore / regista)
+   ═══════════════════════════════════════════════ */
+
+.persona-app {
+    grid-template-columns: var(--w-left) 1fr !important;
+}
+
+/* ── HEADER PERSONA ────────────────────────── */
+.persona-header {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--line);
+}
+
+.persona-photo {
+    width: 200px;
+    height: 280px;
+    object-fit: cover;
+    border-radius: 10px;
+    flex-shrink: 0;
+    box-shadow: 0 16px 48px rgba(0,0,0,.6);
+    background: var(--panel2);
+}
+
+.persona-info {
+    flex: 1;
+    min-width: 0;
+    padding-top: 8px;
+}
+
+.persona-name {
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.15;
+    margin-bottom: 8px;
+}
+
+.persona-dept {
+    display: inline-block;
+    padding: 4px 13px;
+    border-radius: 20px;
+    background: rgba(139,92,246,.13);
+    border: 1px solid rgba(139,92,246,.28);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: 22px;
+}
+
+/* Details (birthday, birthplace, …) */
+.persona-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.detail-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.detail-item span:last-child {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+}
+
+/* Bio */
+.persona-bio {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--muted);
+    max-width: 660px;
+}
+
+.bio-toggle {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: opacity .2s;
+}
+
+.bio-toggle:hover { opacity: .75; }
+
+/* ── SEZIONE GENERICA ──────────────────────── */
+.persona-section {
+    padding-top: 32px;
+    margin-top: 4px;
+    border-top: 1px solid var(--line);
+}
+
+.section-title-p {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 22px;
+}
+
+/* ── FILM GRID ─────────────────────────────── */
+.film-grid-persona {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    gap: 12px;
+}
+
+.film-card-p {
+    display: block;
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    background: var(--panel);
+    transition: transform .22s;
+}
+
+.film-card-p:hover { transform: scale(1.04); }
+
+.film-card-p img {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+}
+
+.film-card-p-info {
+    position: absolute;
+    inset: 0;
+    padding: 30px 8px 8px;
+    background: linear-gradient(to top, rgba(0,0,0,.92) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity .22s;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.film-card-p:hover .film-card-p-info { opacity: 1; }
+
+.film-card-p-info strong {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    margin-bottom: 2px;
+}
+
+.film-card-p-info span {
+    font-size: 10px;
+    color: var(--muted);
+}
+
+/* ── RESPONSIVE ────────────────────────────── */
+@media (max-width: 768px) {
+    .persona-header { flex-direction: column; align-items: center; text-align: center; }
+    .persona-photo  { width: 160px; height: 220px; }
+    .persona-details { justify-content: center; }
+    .persona-name   { font-size: 26px; }
+}

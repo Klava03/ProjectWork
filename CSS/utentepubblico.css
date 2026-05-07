@@ -1,0 +1,292 @@
+/* ═══════════════════════════════════════════════
+   PULSE — UTENTE PUBBLICO (profilo altrui)
+   ═══════════════════════════════════════════════ */
+
+.utente-app {
+    grid-template-columns: var(--w-left) 1fr !important;
+}
+
+/* ── HEADER ────────────────────────────────── */
+.up-header {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 4px;
+}
+
+.up-avatar-wrap { flex-shrink: 0; }
+
+.up-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    object-fit: cover;
+    display: block;
+}
+
+.up-info { flex: 1; min-width: 0; }
+
+.up-name-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.up-username {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+/* Pulsante segui / modifica */
+.up-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--accent);
+    background: rgba(139,92,246,.12);
+    color: var(--accent);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    text-decoration: none;
+}
+
+.up-action-btn:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+.up-action-btn.following {
+    background: rgba(139,92,246,.08);
+    border-color: rgba(139,92,246,.4);
+    color: var(--muted);
+}
+
+.up-action-btn.following:hover {
+    background: rgba(239,68,68,.12);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+/* Bio */
+.up-bio {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 22px;
+    max-width: 520px;
+}
+
+/* Stats */
+.up-stats {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+
+.up-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.up-num {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+}
+
+.up-lab {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+/* ── SEZIONI ───────────────────────────────── */
+.up-section {
+    padding-top: 30px;
+    border-top: 1px solid var(--line);
+}
+
+.up-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.up-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.up-section-link {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color .2s;
+}
+
+.up-section-link:hover { color: var(--accent); }
+
+/* ── LOG / RECENSIONI ──────────────────────── */
+.up-logs {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.up-log-card {
+    display: flex;
+    gap: 18px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    transition: border-color .2s;
+}
+
+.up-log-card:hover { border-color: rgba(139,92,246,.3); }
+
+.up-log-poster {
+    width: 64px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    object-fit: cover;
+    align-self: flex-start;
+}
+
+.up-log-info { flex: 1; min-width: 0; }
+
+.up-log-info h4 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: var(--text);
+}
+
+.up-log-year {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 13px;
+}
+
+.up-log-stars {
+    color: var(--accent);
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.up-log-text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+
+.up-log-date {
+    font-size: 11px;
+    color: var(--muted);
+    opacity: .7;
+}
+
+/* ── LISTE ─────────────────────────────────── */
+.up-liste-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+}
+
+.up-lista-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: transform .2s;
+}
+
+.up-lista-card:hover { transform: translateY(-4px); }
+
+.up-lista-stack {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.up-lista-cover {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+    position: relative;
+    z-index: 3;
+    box-shadow: 0 4px 16px rgba(0,0,0,.5);
+}
+
+.up-lista-layer,
+.up-lista-layer2 {
+    position: absolute;
+    border-radius: 8px;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+}
+
+.up-lista-layer {
+    inset: 0;
+    z-index: 2;
+    transform: rotate(3deg) translateY(4px);
+}
+
+.up-lista-layer2 {
+    inset: 0;
+    z-index: 1;
+    transform: rotate(6deg) translateY(8px);
+}
+
+.up-lista-titolo {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.up-lista-meta {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+/* ── STATO VUOTO ───────────────────────────── */
+.up-empty {
+    color: var(--muted);
+    font-size: 14px;
+    padding: 20px 0;
+}
+
+/* ── RESPONSIVE ────────────────────────────── */
+@media (max-width: 768px) {
+    .up-header  { flex-direction: column; align-items: center; text-align: center; }
+    .up-stats   { justify-content: center; }
+    .up-name-row { justify-content: center; }
+}
