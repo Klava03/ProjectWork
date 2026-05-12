@@ -1134,3 +1134,498 @@ a.prof-stat:hover { opacity: .75; }
     backdrop-filter: blur(4px);
     letter-spacing: .02em;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   TAB: LISTE — Stile Letterboxd
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+ 
+.prof-liste-lbxd {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-top: 8px;
+}
+ 
+.lbxd-list-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 6px;
+    border-bottom: 1px solid rgba(255,255,255,.055);
+    text-decoration: none;
+    transition: background .14s;
+    border-radius: 8px;
+}
+ 
+.lbxd-list-card:last-child {
+    border-bottom: none;
+}
+ 
+.lbxd-list-card:hover {
+    background: rgba(255,255,255,.03);
+    padding-left: 12px;
+    padding-right: 12px;
+}
+ 
+/* Mosaico poster */
+.lbxd-list-covers {
+    position: relative;
+    display: flex;
+    gap: 2px;
+    width: 240px;
+    min-width: 240px;
+    height: 72px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(255,255,255,.06);
+    flex-shrink: 0;
+}
+ 
+.lbxd-cover-img {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+ 
+.lbxd-cover-empty {
+    flex: 1;
+    height: 100%;
+    background: rgba(255,255,255,.04);
+}
+ 
+.lbxd-cover-noimg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: var(--muted);
+}
+ 
+.lbxd-covers-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to right,
+        transparent 50%,
+        rgba(0,0,0,.28) 100%
+    );
+    pointer-events: none;
+}
+ 
+/* Info lista */
+.lbxd-list-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    flex: 1;
+}
+ 
+.lbxd-list-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    line-height: 1.3;
+}
+ 
+.lbxd-lock {
+    font-size: 12px;
+    color: var(--muted);
+}
+ 
+.lbxd-list-count {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+}
+ 
+ 
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   TAB: ATTIVITÀ — Stile Letterboxd
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+ 
+.prof-activity {
+    display: flex;
+    flex-direction: column;
+    padding-top: 6px;
+}
+ 
+/* Singola riga */
+.act-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 6px;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    transition: background .12s;
+}
+ 
+.act-row:last-child {
+    border-bottom: none;
+}
+ 
+.act-row:hover {
+    background: rgba(255,255,255,.025);
+    border-radius: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+ 
+/* Poster film */
+.act-poster-link {
+    flex-shrink: 0;
+}
+ 
+.act-poster {
+    width: 36px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+    flex-shrink: 0;
+    background: rgba(255,255,255,.07);
+}
+ 
+.act-poster-empty {
+    width: 36px;
+    height: 54px;
+    border-radius: 4px;
+    background: rgba(255,255,255,.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 16px;
+    flex-shrink: 0;
+}
+ 
+/* Icone per azioni non-film */
+.act-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+ 
+.act-icon-follow {
+    background: rgba(139,92,246,.15);
+    color: var(--accent);
+    border: 1px solid rgba(139,92,246,.25);
+}
+ 
+.act-icon-like {
+    background: rgba(239,68,68,.12);
+    color: #f87171;
+    border: 1px solid rgba(239,68,68,.2);
+}
+ 
+.act-icon-lista {
+    background: rgba(99,179,237,.1);
+    color: #63b3ed;
+    border: 1px solid rgba(99,179,237,.2);
+}
+ 
+/* Corpo testo */
+.act-body {
+    flex: 1;
+    min-width: 0;
+}
+ 
+.act-text {
+    font-size: 13.5px;
+    color: rgba(255,255,255,.75);
+    line-height: 1.5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+}
+ 
+.act-film-link {
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    transition: color .15s;
+}
+ 
+.act-film-link:hover {
+    color: var(--accent);
+}
+ 
+.act-anno {
+    font-size: 11.5px;
+    color: var(--muted);
+    font-weight: 400;
+}
+ 
+.act-stars {
+    color: #facc15;
+    font-size: 12.5px;
+    letter-spacing: 1px;
+    font-weight: 400;
+}
+ 
+/* Timestamp */
+.act-ago {
+    font-size: 11.5px;
+    color: var(--muted);
+    flex-shrink: 0;
+    min-width: 32px;
+    text-align: right;
+}
+
+/* ══════════════════════════════════════════════
+   AGGIUNTE FINALI — incolla IN FONDO a CSS/Profilo.css
+   Corregge i class name mancanti usati nel PHP
+   ══════════════════════════════════════════════ */
+
+/* Alias per .prof-num / .prof-lab (usati nel PHP come prof-stat-num / prof-stat-label) */
+.prof-stat-num {
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.prof-stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+/* Alias per .prof-favs-title (usato nel PHP come prof-favs-label) */
+.prof-favs-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 14px;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   TAB: LISTE — Stile Letterboxd
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.prof-liste-lbxd {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-top: 8px;
+}
+
+.lbxd-list-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 6px;
+    border-bottom: 1px solid rgba(255,255,255,.055);
+    text-decoration: none;
+    transition: background .14s, padding .14s;
+    border-radius: 8px;
+}
+
+.lbxd-list-card:last-child { border-bottom: none; }
+
+.lbxd-list-card:hover {
+    background: rgba(255,255,255,.03);
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.lbxd-list-covers {
+    position: relative;
+    display: flex;
+    gap: 2px;
+    width: 240px;
+    min-width: 240px;
+    height: 72px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(255,255,255,.06);
+    flex-shrink: 0;
+}
+
+.lbxd-cover-img {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.lbxd-cover-empty {
+    flex: 1;
+    height: 100%;
+    background: rgba(255,255,255,.04);
+}
+
+.lbxd-cover-noimg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: var(--muted);
+}
+
+.lbxd-covers-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, transparent 50%, rgba(0,0,0,.28) 100%);
+    pointer-events: none;
+}
+
+.lbxd-list-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+}
+
+.lbxd-list-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+}
+
+.lbxd-list-count {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.lbxd-list-desc {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   TAB: ATTIVITÀ — Stile Letterboxd
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.prof-activity {
+    display: flex;
+    flex-direction: column;
+    padding-top: 6px;
+}
+
+.act-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 6px;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    transition: background .12s, padding .12s;
+}
+
+.act-row:last-child { border-bottom: none; }
+
+.act-row:hover {
+    background: rgba(255,255,255,.025);
+    border-radius: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.act-poster-link { flex-shrink: 0; }
+
+.act-poster {
+    width: 36px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+    flex-shrink: 0;
+    background: rgba(255,255,255,.07);
+}
+
+.act-poster-empty {
+    width: 36px;
+    height: 54px;
+    border-radius: 4px;
+    background: rgba(255,255,255,.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.act-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.act-icon-follow {
+    background: rgba(139,92,246,.15);
+    color: var(--accent);
+    border: 1px solid rgba(139,92,246,.25);
+}
+
+.act-icon-lista {
+    background: rgba(99,179,237,.1);
+    color: #63b3ed;
+    border: 1px solid rgba(99,179,237,.2);
+}
+
+.act-body { flex: 1; min-width: 0; }
+
+.act-text {
+    font-size: 13.5px;
+    color: rgba(255,255,255,.75);
+    line-height: 1.5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+}
+
+.act-film-link {
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    transition: color .15s;
+}
+
+.act-film-link:hover { color: var(--accent); }
+
+.act-anno { font-size: 11.5px; color: var(--muted); }
+
+.act-stars {
+    color: #facc15;
+    font-size: 12.5px;
+    letter-spacing: 1px;
+}
+
+.act-ago {
+    font-size: 11.5px;
+    color: var(--muted);
+    flex-shrink: 0;
+    min-width: 32px;
+    text-align: right;
+}

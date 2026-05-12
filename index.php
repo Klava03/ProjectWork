@@ -78,6 +78,7 @@ $pageCSS = match($page) {
     'recensioni'                  => 'CSS/Recensioni.css', 
     'home'                        => 'CSS/HomeFeed.css',    
     'liste', 'lista'              => 'CSS/Liste.css',
+    'notifiche'                   => 'CSS/Notifiche.css',
     default                       => null,
 };
 

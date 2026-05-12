@@ -5,7 +5,7 @@ require_once 'Database.php';
 $pdo   = getConnection();
 $my_id = (int)$_SESSION['user_id'];
 
-$filtro = $_GET['filtro'] ?? 'mie';   // mie | seguiti
+$filtro = $_GET['filtro'] ?? 'mie';   // mie | seguiti |
 
 // ── Conteggio seguiti ────────────────────────────────────────────
 $stmtSeg = $pdo->prepare("SELECT COUNT(*) FROM Segui WHERE IDSeguitore = ?");

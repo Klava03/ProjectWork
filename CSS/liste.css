@@ -651,3 +651,148 @@
 }
 .lt-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: all; }
 .lt-toast.error { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.3); color: var(--danger); }
+
+/* ── Modal invita ──────────────────────────── */
+.lt-modal-invite {
+    max-width: 480px;
+}
+ 
+.lt-invite-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin: -10px 0 18px;
+    line-height: 1.5;
+}
+ 
+.lt-invite-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 30px 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+ 
+.lt-invite-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-height: 380px;
+    overflow-y: auto;
+}
+ 
+.lt-invite-empty {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 30px 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+}
+ 
+.lt-invite-empty small {
+    font-size: 12px;
+    color: var(--muted);
+    opacity: .7;
+}
+ 
+/* Riga singolo amico */
+.lt-invite-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    transition: background .12s;
+}
+ 
+.lt-invite-row:last-child { border-bottom: none; }
+.lt-invite-row:hover { background: rgba(255,255,255,.025); border-radius: 8px; }
+ 
+.lt-invite-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--line);
+    flex-shrink: 0;
+}
+ 
+.lt-invite-info {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+ 
+/* Bottone invita */
+.lt-invite-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    border: 1px solid var(--accent);
+    background: rgba(139,92,246,.12);
+    color: var(--accent);
+    transition: all .2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+ 
+.lt-invite-btn:hover:not(:disabled) {
+    background: var(--accent);
+    color: #fff;
+}
+ 
+.lt-invite-btn:disabled {
+    opacity: .5;
+    cursor: wait;
+}
+ 
+/* Badge stato */
+.lt-invite-stato {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+ 
+.lt-invite-stato.membro {
+    background: rgba(34,197,94,.1);
+    color: #4ade80;
+    border: 1px solid rgba(34,197,94,.2);
+}
+ 
+.lt-invite-stato.pending {
+    background: rgba(250,204,21,.08);
+    color: #facc15;
+    border: 1px solid rgba(250,204,21,.2);
+}
+ 
+/* Trigger button */
+.lt-invite-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+}
+ 
+/* Spin animation */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+ 
+.spin { animation: spin .6s linear infinite; display: inline-block; }
