@@ -46,38 +46,36 @@ if ($page === 'cerca') {
 // Esempio: /Pulse/crea_log?tmdb_id=550
 // tmdb_id è già in $_GET, Crea.php lo legge direttamente
 
-// ── Tabella delle rotte ──────────────────────────────────────────
+// ── Tabella delle rotte (sezione da aggiornare) ──
 $routes = [
-    // Core
-    'home'       => 'Home.php',
-    'profilo'    => 'Profilo.php',
-    'cerca'      => 'Cerca.php',
-    'login'      => 'Login.php',
-    'register'   => 'Registrazione.php',
-    'logout'     => 'Logout.php',
-    'community'  => 'Community.php',
-    'notifiche'  => 'Notifiche.php',
-    'liste'      => 'Liste.php',
-    'recensioni' => 'Recensioni.php',
-
-    // Crea
-    'crea'       => 'Crea.php',       // /Pulse/crea
-    'crea_log'   => 'Crea.php',       // /Pulse/crea_log?tmdb_id=XXX
-
-    // Pagine dettaglio
-    'film'       => 'Film.php',       // /Pulse/film/550-fight-club
-    'persona'    => 'Persona.php',    // /Pulse/persona/287-brad-pitt
-    'utente'     => 'UtentePubblico.php', // /Pulse/utente/mario
+    'home'             => 'Home.php',
+    'profilo'          => 'Profilo.php',
+    'modifica-profilo' => 'ModificaProfilo.php',   // ← AGGIUNTO
+    'cerca'            => 'Cerca.php',
+    'login'            => 'Login.php',
+    'register'         => 'Registrazione.php',
+    'logout'           => 'Logout.php',
+    'community'        => 'Community.php',
+    'notifiche'        => 'Notifiche.php',
+    'liste'            => 'Liste.php',
+    'recensioni'       => 'Recensioni.php',
+    'crea'             => 'Crea.php',
+    'crea_log'         => 'Crea.php',
+    'film'             => 'Film.php',
+    'persona'          => 'Persona.php',
+    'utente'           => 'Profilo.php',            // ← CAMBIATO (era UtentePubblico.php)
 ];
-
-// ── CSS per pagina (iniettato in head.php) ───────────────────────
+ 
+// ── CSS per pagina (sezione da aggiornare) ──
 $pageCSS = match($page) {
-    'film'               => 'CSS/Film.css',
-    'persona'            => 'CSS/Persona.css',
-    'utente'             => 'CSS/UtentePubblico.css',
-    'crea', 'crea_log'   => 'CSS/Crea.css',
-    'profilo'            => 'CSS/Profilo.css',
-    default              => null,
+    'film'                        => 'CSS/Film.css',
+    'persona'                     => 'CSS/Persona.css',
+    'utente'                      => 'CSS/Profilo.css',          // ← CAMBIATO
+    'crea', 'crea_log'            => 'CSS/Crea.css',
+    'profilo'                     => 'CSS/Profilo.css',
+    'modifica-profilo'            => 'CSS/ModificaProfilo.css',  // ← AGGIUNTO
+    'recensioni'                  => 'CSS/Recensioni.css',       // ← AGGIUNTO
+    default                       => null,
 };
 
 if (!isset($routes[$page])) {

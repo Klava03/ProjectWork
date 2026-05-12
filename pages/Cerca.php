@@ -255,8 +255,13 @@ $noImg = "https://s.ltrbxd.com/static/img/empty-poster-230-nQeuntFa.png";
                 <?php elseif ($tab === 'utenti'): ?>
                     <div class="user-list">
                         <?php foreach ($risultati as $user):
-                            $avatar = $user['Avatar_URL']
-                                ?? "https://ui-avatars.com/api/?name=" . urlencode($user['Username']) . "&background=8b5cf6&color=fff";
+                            $avatarRaw = $user['Avatar_URL'] ?? null;
+                            $avatar = $avatarRaw
+                                ? (str_starts_with($avatarRaw, 'http')
+                                    ? $avatarRaw
+                                    : '/Pulse/IMG/avatars/' . $avatarRaw)
+                                : "https://ui-avatars.com/api/?name=" . urlencode($user['Username'])
+                                . "&background=8b5cf6&color=fff&size=80";
                         ?>
                             <div class="user-card"
                                 onclick="location.href='/Pulse/utente/<?= htmlspecialchars(urlencode($user['Username'])) ?>'"

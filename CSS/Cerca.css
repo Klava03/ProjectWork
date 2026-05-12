@@ -489,3 +489,5 @@ main.center {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.user-avatar { border-radius: 50%; border: 2px solid var(--accent); }

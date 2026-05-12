@@ -68,27 +68,41 @@ function ensureFilmExistsLog(PDO $pdo, int $tmdb_id): int|false
     return (int)$pdo->lastInsertId();
 }
 
+ 
 function upsertVisioneLog(PDO $pdo, int $uid, int $film_id, array $fields): void
 {
-    $allowed = ['Is_Watched','In_Watchlist','Liked','Rating','Is_Favourite'];
-    $set = []; $vals = [];
+    // Whitelist colonne ammesse
+    $allowed  = ['Is_Watched', 'In_Watchlist', 'Liked', 'Rating', 'Is_Favourite'];
+    $filtered = [];
     foreach ($fields as $col => $val) {
-        if (!in_array($col, $allowed, true)) continue;
-        $set[]  = "`{$col}` = ?";
-        $vals[] = $val;
+        if (in_array($col, $allowed, true)) {
+            $filtered[$col] = $val;
+        }
     }
-    if (!$set) return;
-
-    $sql  = "UPDATE Visione SET " . implode(', ', $set) . " WHERE IDUtente = ? AND IDFilm = ?";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([...$vals, $uid, $film_id]);
-    if ($stmt->rowCount() === 0) {
-        $cols         = array_keys($fields);
-        $colList      = 'IDUtente, IDFilm, ' . implode(', ', array_map(fn($c) => "`{$c}`", $cols));
-        $placeholders = implode(', ', array_fill(0, count($cols) + 2, '?'));
-        $pdo->prepare("INSERT INTO Visione ({$colList}) VALUES ({$placeholders})")
-            ->execute([$uid, $film_id, ...array_values($fields)]);
-    }
+    if (!$filtered) return;
+ 
+    $cols = array_keys($filtered);
+    $vals = array_values($filtered);
+ 
+    // Costruisce:
+    //   INSERT INTO Visione (IDUtente, IDFilm, `Col1`, `Col2`, ...)
+    //   VALUES (?, ?, ?, ?, ...)
+    //   ON DUPLICATE KEY UPDATE `Col1` = VALUES(`Col1`), `Col2` = VALUES(`Col2`), ...
+    //
+    // Questo è atomico e gestisce correttamente tutti i casi:
+    //   - riga non esiste → INSERT
+    //   - riga esiste, valori diversi → UPDATE
+    //   - riga esiste, valori UGUALI → nessuna operazione (nessun errore)
+ 
+    $colList      = 'IDUtente, IDFilm, ' . implode(', ', array_map(fn($c) => "`{$c}`", $cols));
+    $placeholders = implode(', ', array_fill(0, count($cols) + 2, '?'));
+    $updates      = implode(', ', array_map(fn($c) => "`{$c}` = VALUES(`{$c}`)", $cols));
+ 
+    $pdo->prepare(
+        "INSERT INTO Visione ({$colList})
+         VALUES ({$placeholders})
+         ON DUPLICATE KEY UPDATE {$updates}"
+    )->execute([$uid, $film_id, ...$vals]);
 }
 
 /** Normalizza il voto: null se vuoto, altrimenti arrotonda a 0.5 nel range 0.5–5.0 */
