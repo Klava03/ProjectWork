@@ -4,9 +4,14 @@
  *
  * Azioni disponibili (POST JSON):
  *   cerca_film   → ricerca su TMDB          { q }
- *   salva_log    → crea nuovo Log            { tmdb_id, data, voto, recensione, liked }
- *   modifica_log → aggiorna Log esistente    { log_id, data, voto, recensione, liked }
- *   elimina_log  → cancella Log              { log_id }
+ *   salva_log    → CREA un nuovo Log         { tmdb_id, data, voto, recensione, liked }
+ *   modifica_log → AGGIORNA un Log esistente { log_id, data, voto, recensione, liked }
+ *   elimina_log  → cancella un Log           { log_id }
+ *
+ * IMPORTANTE — `modifica_log` esegue solo UPDATE, MAI INSERT:
+ *   - se manca log_id → errore
+ *   - se il log non appartiene all'utente loggato → errore
+ *   - altrimenti UPDATE Log SET ... WHERE ID = log_id
  */
 
 declare(strict_types=1);
@@ -78,12 +83,22 @@ function upsertVisioneLog(PDO $pdo, int $uid, int $film_id, array $fields): void
     $stmt = $pdo->prepare($sql);
     $stmt->execute([...$vals, $uid, $film_id]);
     if ($stmt->rowCount() === 0) {
-        $cols = array_keys($fields);
+        $cols         = array_keys($fields);
         $colList      = 'IDUtente, IDFilm, ' . implode(', ', array_map(fn($c) => "`{$c}`", $cols));
         $placeholders = implode(', ', array_fill(0, count($cols) + 2, '?'));
         $pdo->prepare("INSERT INTO Visione ({$colList}) VALUES ({$placeholders})")
             ->execute([$uid, $film_id, ...array_values($fields)]);
     }
+}
+
+/** Normalizza il voto: null se vuoto, altrimenti arrotonda a 0.5 nel range 0.5–5.0 */
+function normalizzaVoto($raw): ?float
+{
+    if ($raw === null || $raw === '' || $raw === false) return null;
+    $v = (float)$raw;
+    if ($v <= 0) return null;                   // 0 = nessun voto
+    $v = round($v * 2) / 2;                     // arrotondamento a 0.5
+    return max(0.5, min(5.0, $v));
 }
 
 // ── Router ──────────────────────────────────
@@ -93,7 +108,7 @@ try {
         // ── Ricerca film (TMDB) ──────────────
         case 'cerca_film':
             $q = trim($data['q'] ?? '');
-            if (strlen($q) < 2) { echo json_encode(['ok'=>true,'films'=>[]]); break; }
+            if (mb_strlen($q) < 2) { echo json_encode(['ok'=>true,'films'=>[]]); break; }
 
             $ch = curl_init("https://api.themoviedb.org/3/search/movie?query=" . urlencode($q) . "&language=it-IT");
             curl_setopt_array($ch, [
@@ -113,34 +128,26 @@ try {
             echo json_encode(['ok' => true, 'films' => $films]);
             break;
 
-        // ── Salva nuovo log ──────────────────
+        // ── Salva NUOVO log (INSERT) ─────────
         case 'salva_log':
             $tmdb_id    = (int)($data['tmdb_id']   ?? 0);
             $data_vis   = $data['data']             ?? date('Y-m-d');
-            $voto       = isset($data['voto'])      ? (float)$data['voto'] : null;
+            $voto       = normalizzaVoto($data['voto'] ?? null);
             $recensione = trim($data['recensione']  ?? '');
             $liked      = !empty($data['liked']);
 
             if (!$tmdb_id) { echo json_encode(['ok'=>false,'error'=>'Film non specificato']); break; }
-            // Valida data
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $data_vis)) $data_vis = date('Y-m-d');
-            // Valida voto (0.5 step, 0.5–5)
-            if ($voto !== null) {
-                $voto = round($voto * 2) / 2;
-                $voto = max(0.5, min(5.0, $voto));
-            }
 
             $film_id = ensureFilmExistsLog($pdo, $tmdb_id);
             if (!$film_id) { echo json_encode(['ok'=>false,'error'=>'Film non trovato']); break; }
 
-            // Inserisci log
             $stmt = $pdo->prepare(
                 "INSERT INTO Log (IDUtente, IDFilm, Data, Voto, Recensione) VALUES (?, ?, ?, ?, ?)"
             );
             $stmt->execute([$my_id, $film_id, $data_vis, $voto, $recensione ?: null]);
             $log_id = (int)$pdo->lastInsertId();
 
-            // Aggiorna Visione
             $visioneData = ['Is_Watched' => 1, 'Liked' => (int)$liked];
             if ($voto !== null) $visioneData['Rating'] = $voto;
             upsertVisioneLog($pdo, $my_id, $film_id, $visioneData);
@@ -148,33 +155,55 @@ try {
             echo json_encode(['ok' => true, 'log_id' => $log_id]);
             break;
 
-        // ── Modifica log esistente ───────────
+        // ── MODIFICA log esistente (UPDATE) ──
+        // *** FA SOLO UPDATE — NON CREA NUOVI RECORD ***
         case 'modifica_log':
-            $log_id     = (int)($data['log_id']    ?? 0);
-            $data_vis   = $data['data']             ?? date('Y-m-d');
-            $voto       = isset($data['voto'])      ? (float)$data['voto'] : null;
-            $recensione = trim($data['recensione']  ?? '');
+            $log_id     = (int)($data['log_id'] ?? 0);
+            $data_vis   = $data['data']         ?? date('Y-m-d');
+            $voto       = normalizzaVoto($data['voto'] ?? null);
+            $recensione = trim($data['recensione'] ?? '');
             $liked      = !empty($data['liked']);
 
-            if (!$log_id) { echo json_encode(['ok'=>false,'error'=>'Log non specificato']); break; }
+            if (!$log_id) {
+                echo json_encode(['ok'=>false,'error'=>'Log non specificato']);
+                break;
+            }
 
-            // Verifica proprietà
-            $stmt = $pdo->prepare("SELECT IDFilm FROM Log WHERE ID = ? AND IDUtente = ? LIMIT 1");
+            // 1. Verifica che il log esista E appartenga all'utente loggato
+            $stmt = $pdo->prepare(
+                "SELECT IDFilm FROM Log WHERE ID = ? AND IDUtente = ? LIMIT 1"
+            );
             $stmt->execute([$log_id, $my_id]);
             $film_id = $stmt->fetchColumn();
-            if (!$film_id) { echo json_encode(['ok'=>false,'error'=>'Log non trovato o non autorizzato']); break; }
+            if (!$film_id) {
+                echo json_encode(['ok'=>false,'error'=>'Log non trovato o non autorizzato']);
+                break;
+            }
 
+            // 2. Validazione data
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $data_vis)) $data_vis = date('Y-m-d');
-            if ($voto !== null) { $voto = round($voto * 2) / 2; $voto = max(0.5, min(5.0, $voto)); }
 
-            $pdo->prepare("UPDATE Log SET Data = ?, Voto = ?, Recensione = ? WHERE ID = ?")
-                ->execute([$data_vis, $voto, $recensione ?: null, $log_id]);
+            // 3. UPDATE — questa è l'unica operazione di scrittura su Log
+            //    Nota: il WHERE include sia ID che IDUtente per doppia sicurezza.
+            $stmt = $pdo->prepare(
+                "UPDATE Log
+                 SET Data = ?, Voto = ?, Recensione = ?
+                 WHERE ID = ? AND IDUtente = ?"
+            );
+            $stmt->execute([
+                $data_vis,
+                $voto,
+                $recensione !== '' ? $recensione : null,
+                $log_id,
+                $my_id,
+            ]);
 
+            // 4. Sincronizza Visione (Liked + Rating)
             $visioneData = ['Liked' => (int)$liked];
             if ($voto !== null) $visioneData['Rating'] = $voto;
             upsertVisioneLog($pdo, $my_id, (int)$film_id, $visioneData);
 
-            echo json_encode(['ok' => true]);
+            echo json_encode(['ok' => true, 'log_id' => $log_id]);
             break;
 
         // ── Elimina log ──────────────────────

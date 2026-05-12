@@ -1,5 +1,5 @@
 <?php
-// pages/UtentePublico.php — incluso da index.php
+// pages/UtentePubblico.php — incluso da index.php
 // URI: /Pulse/utente/{username}
 //
 // LOGICA DI INDIRIZZAMENTO:
@@ -18,7 +18,6 @@ if ($username_target === '') {
 }
 
 // ── Redirect se è il proprio profilo ─────────
-// Confronto case-insensitive perché gli username possono avere maiuscole
 if (isset($_SESSION['username']) &&
     mb_strtolower($username_target) === mb_strtolower($_SESSION['username'])) {
     header('Location: /Pulse/profilo');
@@ -38,6 +37,16 @@ if (!$utente) {
 
 $uid   = $utente['ID'];
 $my_id = (int)$_SESSION['user_id'];
+
+// Helper slug (locale, in caso non sia già definito)
+if (!function_exists('slugify_up')) {
+    function slugify_up(string $s): string {
+        $s = mb_strtolower($s, 'UTF-8');
+        $s = preg_replace('/[^a-z0-9\s\-]/u', '', $s);
+        $s = preg_replace('/[\s\-]+/', '-', $s);
+        return trim($s, '-');
+    }
+}
 
 // ── Statistiche ───────────────────────────────
 $stmt = $pdo->prepare("SELECT COUNT(*) FROM Visione WHERE IDUtente = ? AND Is_Watched = 1");
@@ -60,6 +69,19 @@ $count_recensioni = (int)$stmt->fetchColumn();
 $stmt = $pdo->prepare("SELECT 1 FROM Segui WHERE IDSeguitore = ? AND IDSeguito = ? LIMIT 1");
 $stmt->execute([$my_id, $uid]);
 $sto_seguendo = (bool)$stmt->fetchColumn();
+
+// ── PREFERITI dell'utente (max 5) ─────────────
+$stmt = $pdo->prepare("
+    SELECT F.ID, F.TMDB_ID, F.Title, F.Poster_Path, F.Release_Date
+    FROM Visione V
+    JOIN Film F ON V.IDFilm = F.ID
+    WHERE V.IDUtente = ? AND V.Is_Favourite = 1
+    ORDER BY F.Title ASC
+    LIMIT 5
+");
+$stmt->execute([$uid]);
+$preferiti_pub = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$pref_slots_pub = array_pad($preferiti_pub, 5, null);
 
 // ── Ultimi log ────────────────────────────────
 $stmt = $pdo->prepare("
@@ -113,15 +135,14 @@ $avatar = $utente['Avatar_URL']
                 <div class="up-name-row">
                     <h1 class="up-username">@<?= htmlspecialchars($utente['Username']) ?></h1>
 
-                    <!-- Pulsante segui (questa pagina è sempre di un altro utente) -->
                     <button class="up-action-btn <?= $sto_seguendo ? 'following' : '' ?>"
                             id="followBtn"
                             data-id="<?= $uid ?>"
                             data-following="<?= $sto_seguendo ? '1' : '0' ?>">
                         <?php if ($sto_seguendo): ?>
-                            <i class="bi bi-check2"></i> Seguito
+                            <i class="bi bi-check2"></i> <span class="btn-label">Seguito</span>
                         <?php else: ?>
-                            <i class="bi bi-person-plus"></i> Segui
+                            <i class="bi bi-person-plus"></i> <span class="btn-label">Segui</span>
                         <?php endif; ?>
                     </button>
                 </div>
@@ -133,11 +154,46 @@ $avatar = $utente['Avatar_URL']
                 <?php endif; ?>
 
                 <div class="up-stats">
+                    <div class="up-stat"><span class="up-num" id="statFollower"><?= $count_follower ?></span><span class="up-lab">Follower</span></div>
+                    <div class="up-stat"><span class="up-num"><?= $count_seguiti ?></span><span class="up-lab">Seguiti</span></div>
                     <div class="up-stat"><span class="up-num"><?= $count_visti ?></span><span class="up-lab">Film</span></div>
                     <div class="up-stat"><span class="up-num"><?= $count_recensioni ?></span><span class="up-lab">Recensioni</span></div>
-                    <div class="up-stat"><span class="up-num"><?= $count_follower ?></span><span class="up-lab">Follower</span></div>
-                    <div class="up-stat"><span class="up-num"><?= $count_seguiti ?></span><span class="up-lab">Seguiti</span></div>
                 </div>
+            </div>
+        </section>
+
+        <!-- ════════════════════════
+             PREFERITI PUBBLICI
+             ════════════════════════ -->
+        <section class="up-favs">
+            <h3 class="up-favs-title">Film Preferiti</h3>
+            <div class="up-favs-grid">
+                <?php foreach ($pref_slots_pub as $f): ?>
+                    <?php if ($f === null): ?>
+                        <!-- Slot vuoto: stesso stile usato quando un film non ha copertina -->
+                        <div class="fav-slot-pub empty">
+                            <div class="fav-noimg-pub">
+                                <i class="bi bi-film"></i>
+                            </div>
+                        </div>
+                    <?php else:
+                        $poster = !empty($f['Poster_Path'])
+                            ? "https://image.tmdb.org/t/p/w300" . $f['Poster_Path']
+                            : null;
+                    ?>
+                        <a class="fav-slot-pub filled"
+                           href="/Pulse/film/<?= $f['TMDB_ID'] ?>-<?= slugify_up($f['Title']) ?>"
+                           title="<?= htmlspecialchars($f['Title']) ?>">
+                            <?php if ($poster): ?>
+                                <img src="<?= $poster ?>" alt="<?= htmlspecialchars($f['Title']) ?>">
+                            <?php else: ?>
+                                <div class="fav-noimg-pub">
+                                    <span><?= htmlspecialchars($f['Title']) ?></span>
+                                </div>
+                            <?php endif; ?>
+                        </a>
+                    <?php endif; ?>
+                <?php endforeach; ?>
             </div>
         </section>
 
@@ -211,36 +267,75 @@ $avatar = $utente['Avatar_URL']
     </main>
 </div>
 
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
 <script>
+function showToastUp(msg, type='success') {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
 const followBtn = document.getElementById('followBtn');
 if (followBtn) {
     followBtn.addEventListener('click', async function () {
         const userId    = this.dataset.id;
         const following = this.dataset.following === '1';
+        const action    = following ? 'unfollow' : 'follow';
 
-        // Aggiorna UI immediatamente (optimistic update)
+        // Disabilita brevemente per evitare doppi click
+        this.disabled = true;
+
+        // Ottimistico: aggiorna subito la UI
+        const labelEl   = this.querySelector('.btn-label');
+        const iconEl    = this.querySelector('i');
+        const followCnt = document.getElementById('statFollower');
+        const oldFollowers = parseInt(followCnt?.textContent ?? '0', 10);
+
         if (following) {
             this.dataset.following = '0';
-            this.innerHTML = '<i class="bi bi-person-plus"></i> Segui';
             this.classList.remove('following');
+            if (iconEl)  iconEl.className = 'bi bi-person-plus';
+            if (labelEl) labelEl.textContent = 'Segui';
+            if (followCnt) followCnt.textContent = Math.max(0, oldFollowers - 1);
         } else {
             this.dataset.following = '1';
-            this.innerHTML = '<i class="bi bi-check2"></i> Seguito';
             this.classList.add('following');
+            if (iconEl)  iconEl.className = 'bi bi-check2';
+            if (labelEl) labelEl.textContent = 'Seguito';
+            if (followCnt) followCnt.textContent = oldFollowers + 1;
         }
 
-        // Chiamata al backend (da implementare)
         try {
-            await fetch('/Pulse/backend/GestioneUtenti.php', {
+            const res = await fetch('/Pulse/backend/GestioneUtenti.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: following ? 'unfollow' : 'follow',
-                    user_id: userId
-                })
+                body: JSON.stringify({ action, user_id: parseInt(userId, 10) })
             });
+            const json = await res.json();
+
+            if (!json.ok) {
+                // Rollback in caso di errore
+                this.dataset.following = following ? '1' : '0';
+                this.classList.toggle('following', following);
+                if (iconEl)  iconEl.className = following ? 'bi bi-check2' : 'bi bi-person-plus';
+                if (labelEl) labelEl.textContent = following ? 'Seguito' : 'Segui';
+                if (followCnt) followCnt.textContent = oldFollowers;
+                showToastUp('Errore: ' + (json.error ?? 'sconosciuto'), 'error');
+            }
         } catch (err) {
-            console.warn('Follow request failed:', err);
+            // Rollback in caso di errore di rete
+            this.dataset.following = following ? '1' : '0';
+            this.classList.toggle('following', following);
+            if (iconEl)  iconEl.className = following ? 'bi bi-check2' : 'bi bi-person-plus';
+            if (labelEl) labelEl.textContent = following ? 'Seguito' : 'Segui';
+            if (followCnt) followCnt.textContent = oldFollowers;
+            showToastUp('Errore di connessione', 'error');
+        } finally {
+            this.disabled = false;
         }
     });
 }

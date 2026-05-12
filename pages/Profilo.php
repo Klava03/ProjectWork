@@ -28,6 +28,21 @@ $stmt = $pdo->prepare("SELECT COUNT(*) FROM Segui WHERE IDSeguitore = ?");
 $stmt->execute([$my_id]);
 $cnt_seguiti = (int)$stmt->fetchColumn();
 
+// ── PREFERITI (max 5) ─────────────────────────
+$stmt = $pdo->prepare("
+    SELECT F.ID, F.TMDB_ID, F.Title, F.Poster_Path, F.Release_Date
+    FROM Visione V
+    JOIN Film F ON V.IDFilm = F.ID
+    WHERE V.IDUtente = ? AND V.Is_Favourite = 1
+    ORDER BY F.Title ASC
+    LIMIT 5
+");
+$stmt->execute([$my_id]);
+$preferiti = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Pad a 5 slot (gli slot vuoti diventano null)
+$pref_slots = array_pad($preferiti, 5, null);
+
 // ── Dati tab DIARIO ───────────────────────────
 $logs = [];
 if ($tab === 'diario') {
@@ -129,6 +144,44 @@ foreach ($logs as $log) {
             </div>
         </section>
 
+        <!-- ════════════════════════
+             SEZIONE: FILM PREFERITI
+             ════════════════════════ -->
+        <section class="prof-favs">
+            <h3 class="prof-favs-title">Film Preferiti</h3>
+            <div class="prof-favs-grid">
+                <?php foreach ($pref_slots as $idx => $f): ?>
+                    <?php if ($f === null): ?>
+                        <!-- Slot vuoto: mostra il pulsante "+" -->
+                        <div class="fav-slot empty"
+                             onclick="openFavModal(<?= $idx ?>)"
+                             title="Aggiungi film preferito">
+                            <div class="fav-plus">
+                                <i class="bi bi-plus-lg"></i>
+                            </div>
+                        </div>
+                    <?php else:
+                        $poster = !empty($f['Poster_Path'])
+                            ? "https://image.tmdb.org/t/p/w300" . $f['Poster_Path']
+                            : null;
+                        $anno   = !empty($f['Release_Date']) ? substr($f['Release_Date'], 0, 4) : '';
+                    ?>
+                        <a class="fav-slot filled"
+                           href="/Pulse/film/<?= $f['TMDB_ID'] ?>-<?= slugify($f['Title']) ?>"
+                           title="<?= htmlspecialchars($f['Title']) ?>">
+                            <?php if ($poster): ?>
+                                <img src="<?= $poster ?>" alt="<?= htmlspecialchars($f['Title']) ?>">
+                            <?php else: ?>
+                                <div class="fav-noimg">
+                                    <span><?= htmlspecialchars($f['Title']) ?></span>
+                                </div>
+                            <?php endif; ?>
+                        </a>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+        </section>
+
         <!-- ── TABS ── -->
         <nav class="prof-tabs">
             <a href="/Pulse/profilo?tab=diario"  class="prof-tab <?= $tab==='diario'  ? 'active':'' ?>">Diario</a>
@@ -174,18 +227,15 @@ foreach ($logs as $log) {
                     <?php endif; ?>
 
                     <div class="diary-entry" data-log-id="<?= $log['log_id'] ?>">
-                        <!-- Data -->
                         <div class="diary-date">
                             <span class="diary-day"><?= $giorno ?></span>
                             <span class="diary-weekday"><?= $giorni[$dowNum] ?></span>
                         </div>
 
-                        <!-- Poster -->
                         <a href="/Pulse/film/<?= $log['tmdb_id'] ?>-<?= slugify($log['Title']) ?>">
                             <img src="<?= $poster ?>" class="diary-poster" alt="" loading="lazy">
                         </a>
 
-                        <!-- Info -->
                         <div class="diary-info">
                             <a href="/Pulse/film/<?= $log['tmdb_id'] ?>-<?= slugify($log['Title']) ?>" class="diary-title">
                                 <?= htmlspecialchars($log['Title']) ?>
@@ -209,7 +259,6 @@ foreach ($logs as $log) {
                             <?php endif; ?>
                         </div>
 
-                        <!-- Azioni (solo profilo privato) -->
                         <div class="diary-actions">
                             <button class="diary-btn"
                                     onclick="openEditModal(<?= htmlspecialchars(json_encode([
@@ -223,7 +272,7 @@ foreach ($logs as $log) {
                                 <i class="bi bi-pencil"></i> Modifica
                             </button>
                             <button class="diary-btn del"
-                                    onclick="deleteLog(<?= $log['log_id'] ?>, this)">
+                                    onclick="askDeleteLog(<?= $log['log_id'] ?>, this, '<?= htmlspecialchars(addslashes($log['Title']), ENT_QUOTES) ?>')">
                                 <i class="bi bi-trash"></i> Elimina
                             </button>
                         </div>
@@ -245,11 +294,13 @@ foreach ($logs as $log) {
                         $poster  = "https://image.tmdb.org/t/p/w300" . $w['Poster_Path'];
                         $anno_w  = !empty($w['Release_Date']) ? substr($w['Release_Date'],0,4) : '';
                     ?>
-                        <a href="/Pulse/film/<?= $w['TMDB_ID'] ?>-<?= slugify($w['Title']) ?>" class="watched-card">
-                            <img src="<?= $poster ?>" alt="<?= htmlspecialchars($w['Title']) ?>" loading="lazy">
+                        <a class="watched-card"
+                           href="/Pulse/film/<?= $w['TMDB_ID'] ?>-<?= slugify($w['Title']) ?>">
+                            <img src="<?= $poster ?>" alt="<?= htmlspecialchars($w['Title']) ?>">
                             <div class="watched-card-info">
                                 <strong><?= htmlspecialchars($w['Title']) ?></strong>
-                                <small><?= $anno_w ?>
+                                <small>
+                                    <?= $anno_w ?>
                                     <?= $w['Rating'] ? ' · ' . number_format((float)$w['Rating'],1) . '★' : '' ?>
                                 </small>
                             </div>
@@ -266,20 +317,23 @@ foreach ($logs as $log) {
     </main>
 </div>
 
-<!-- ── MODAL MODIFICA LOG ── -->
+<!-- ════════════════════════════════════════════
+     MODAL: MODIFICA LOG
+     ════════════════════════════════════════════ -->
 <div class="modal-overlay" id="editModal">
-    <div class="modal-box">
+    <div class="modal-box modal-edit">
+        <button class="modal-close-x" onclick="closeModal()" aria-label="Chiudi">
+            <i class="bi bi-x-lg"></i>
+        </button>
         <h3 class="modal-title" id="modalFilmTitle">Modifica Log</h3>
         <input type="hidden" id="editLogId">
 
         <div class="log-form" style="gap:18px;">
-            <!-- Data -->
             <div class="form-field">
                 <label class="form-label">Data visione</label>
                 <input type="date" id="editData" class="form-input" max="<?= date('Y-m-d') ?>">
             </div>
 
-            <!-- Rating -->
             <div class="form-field">
                 <label class="form-label">Voto</label>
                 <div class="log-star-picker" id="editStarPicker">
@@ -293,7 +347,6 @@ foreach ($logs as $log) {
                 <input type="hidden" id="editVoto">
             </div>
 
-            <!-- Like -->
             <div class="form-field">
                 <label class="form-label">Mi piace</label>
                 <div class="like-toggle" id="editLikeToggle">
@@ -303,7 +356,6 @@ foreach ($logs as $log) {
                 <input type="hidden" id="editLiked" value="0">
             </div>
 
-            <!-- Recensione -->
             <div class="form-field">
                 <label class="form-label">Recensione</label>
                 <textarea id="editRecensione" class="form-textarea" rows="4"
@@ -318,16 +370,65 @@ foreach ($logs as $log) {
     </div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     MODAL: CONFERMA ELIMINAZIONE (custom)
+     ════════════════════════════════════════════ -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box confirm-box">
+        <div class="confirm-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <h3 class="confirm-title" id="confirmTitle">Eliminare il log?</h3>
+        <p class="confirm-text" id="confirmText">
+            Questa azione non può essere annullata.
+        </p>
+        <div class="confirm-actions">
+            <button class="btn-cancel" onclick="closeConfirm()">Annulla</button>
+            <button class="btn-danger" id="confirmOkBtn">
+                <i class="bi bi-trash"></i> Elimina
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MODAL: AGGIUNGI FILM PREFERITO
+     ════════════════════════════════════════════ -->
+<div class="modal-overlay" id="favModal">
+    <div class="modal-box modal-fav">
+        <button class="modal-close-x" onclick="closeFavModal()" aria-label="Chiudi">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <h3 class="modal-title">Aggiungi un film preferito</h3>
+        <p class="confirm-text" style="margin-bottom:16px;">
+            Cerca un film e selezionalo per aggiungerlo ai tuoi preferiti.
+        </p>
+
+        <div class="film-search-wrap">
+            <input type="text"
+                   id="favSearchInput"
+                   class="film-search-input"
+                   placeholder="Cerca un film…"
+                   autocomplete="off">
+            <i class="bi bi-search film-search-icon"></i>
+        </div>
+        <div class="search-loading" id="favSearchLoading">Ricerca in corso…</div>
+        <div class="film-results" id="favResults" style="margin-top:14px;max-height:340px;overflow-y:auto;"></div>
+    </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-const BACKEND_LOG = '/Pulse/backend/GestioneLog.php';
+const BACKEND_LOG    = '/Pulse/backend/GestioneLog.php';
+const BACKEND_PREF   = '/Pulse/backend/GestionePreferiti.php';
 
 // ── Toast ─────────────────────────────────────
 function showToast(msg, type='success') {
     const t = document.getElementById('toast');
-    t.textContent = msg; t.className = `toast ${type} show`;
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
     setTimeout(() => t.classList.remove('show'), 3200);
 }
 
@@ -340,26 +441,64 @@ function toggleReview(btn) {
     btn.childNodes[1].textContent = open ? ' Chiudi' : ' Recensione';
 }
 
-// ── Elimina log ───────────────────────────────
-async function deleteLog(logId, btn) {
-    if (!confirm('Eliminare questo log?')) return;
-    const res  = await fetch(BACKEND_LOG, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'elimina_log', log_id: logId })
-    });
-    const json = await res.json();
-    if (json.ok) {
-        const row = btn.closest('.diary-entry');
-        row.style.opacity = '0';
-        row.style.transition = 'opacity .3s';
-        setTimeout(() => row.remove(), 310);
-        showToast('Log eliminato.', 'success');
-    } else {
-        showToast('Errore: ' + (json.error ?? 'sconosciuto'), 'error');
+// ════════════════════════════════════════════
+//  MODAL CONFERMA CUSTOM (sostituisce confirm())
+// ════════════════════════════════════════════
+let confirmCallback = null;
+
+function showConfirm(title, text, onOk) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmText').textContent  = text;
+    confirmCallback = onOk;
+    document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirm() {
+    document.getElementById('confirmModal').classList.remove('open');
+    confirmCallback = null;
+}
+document.getElementById('confirmOkBtn').addEventListener('click', () => {
+    const cb = confirmCallback;
+    closeConfirm();
+    if (cb) cb();
+});
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) closeConfirm();
+});
+
+// ── Elimina log (usa modal custom) ────────────
+function askDeleteLog(logId, btn, title) {
+    showConfirm(
+        'Eliminare il log?',
+        `Stai per eliminare il log di "${title}". Questa azione non può essere annullata.`,
+        () => doDeleteLog(logId, btn)
+    );
+}
+
+async function doDeleteLog(logId, btn) {
+    try {
+        const res  = await fetch(BACKEND_LOG, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'elimina_log', log_id: logId })
+        });
+        const json = await res.json();
+        if (json.ok) {
+            const row = btn.closest('.diary-entry');
+            row.style.opacity    = '0';
+            row.style.transition = 'opacity .3s';
+            setTimeout(() => row.remove(), 310);
+            showToast('Log eliminato.', 'success');
+        } else {
+            showToast('Errore: ' + (json.error ?? 'sconosciuto'), 'error');
+        }
+    } catch (err) {
+        showToast('Errore di connessione', 'error');
     }
 }
 
-// ── StarPicker (riusabile) ────────────────────
+// ════════════════════════════════════════════
+//  STAR PICKER (riusabile)
+// ════════════════════════════════════════════
 class StarPicker {
     constructor(containerId, hiddenId, labelId) {
         this.container = document.getElementById(containerId);
@@ -408,7 +547,9 @@ class StarPicker {
 
 const editStar = new StarPicker('editStarPicker','editVoto','editStarLabel');
 
-// ── Modal modifica ────────────────────────────
+// ════════════════════════════════════════════
+//  MODAL MODIFICA LOG
+// ════════════════════════════════════════════
 document.getElementById('editLikeToggle').addEventListener('click', function() {
     const liked = this.classList.toggle('liked');
     document.getElementById('editLiked').value = liked ? '1' : '0';
@@ -431,33 +572,145 @@ function closeModal() {
 }
 
 async function saveEdit() {
-    const log_id    = +document.getElementById('editLogId').value;
-    const data      = document.getElementById('editData').value;
-    const voto      = parseFloat(document.getElementById('editVoto').value) || null;
-    const recensione= document.getElementById('editRecensione').value.trim();
-    const liked     = document.getElementById('editLiked').value === '1';
+    const log_id     = +document.getElementById('editLogId').value;
+    if (!log_id) {
+        showToast('Errore: ID log mancante', 'error');
+        return;
+    }
+    const data       = document.getElementById('editData').value;
+    const voto       = parseFloat(document.getElementById('editVoto').value) || null;
+    const recensione = document.getElementById('editRecensione').value.trim();
+    const liked      = document.getElementById('editLiked').value === '1';
 
     const btn = document.getElementById('btnSalvaEdit');
     btn.disabled = true;
 
-    const res  = await fetch(BACKEND_LOG, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ action:'modifica_log', log_id, data, voto, recensione, liked })
-    });
-    const json = await res.json();
-    btn.disabled = false;
+    try {
+        const res  = await fetch(BACKEND_LOG, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            // ATTENZIONE: action = 'modifica_log' → fa UPDATE, non INSERT
+            body: JSON.stringify({ action:'modifica_log', log_id, data, voto, recensione, liked })
+        });
+        const json = await res.json();
+        btn.disabled = false;
 
-    if (json.ok) {
-        showToast('Log aggiornato!','success');
-        closeModal();
-        setTimeout(()=>location.reload(), 1000);
-    } else {
-        showToast('Errore: '+(json.error??'sconosciuto'),'error');
+        if (json.ok) {
+            showToast('Log aggiornato!','success');
+            closeModal();
+            setTimeout(()=>location.reload(), 800);
+        } else {
+            showToast('Errore: '+(json.error??'sconosciuto'),'error');
+        }
+    } catch (err) {
+        btn.disabled = false;
+        showToast('Errore di connessione','error');
     }
 }
 
-// Chiudi modal cliccando fuori
+// Chiudi modal modifica cliccando fuori
 document.getElementById('editModal').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
+});
+
+// ════════════════════════════════════════════
+//  MODAL AGGIUNGI PREFERITO (con ricerca film)
+// ════════════════════════════════════════════
+function openFavModal(slot) {
+    document.getElementById('favSearchInput').value   = '';
+    document.getElementById('favResults').innerHTML   = '';
+    document.getElementById('favSearchLoading').style.display = 'none';
+    document.getElementById('favModal').classList.add('open');
+    setTimeout(() => document.getElementById('favSearchInput').focus(), 50);
+}
+
+function closeFavModal() {
+    document.getElementById('favModal').classList.remove('open');
+}
+
+document.getElementById('favModal').addEventListener('click', function(e) {
+    if (e.target === this) closeFavModal();
+});
+
+// Ricerca film (debounce 380ms) — riusa il pattern già usato in Crea
+let favSearchTimer = null;
+const favInput     = document.getElementById('favSearchInput');
+const favResults   = document.getElementById('favResults');
+const favLoading   = document.getElementById('favSearchLoading');
+
+favInput.addEventListener('input', function() {
+    clearTimeout(favSearchTimer);
+    const q = this.value.trim();
+    if (q.length < 2) { favResults.innerHTML = ''; return; }
+    favLoading.style.display = 'block';
+    favSearchTimer = setTimeout(() => searchFavFilm(q), 380);
+});
+
+async function searchFavFilm(q) {
+    try {
+        const res  = await fetch(BACKEND_PREF, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'cerca_film', q })
+        });
+        const data = await res.json();
+        favLoading.style.display = 'none';
+        renderFavResults(data.films ?? []);
+    } catch (e) {
+        favLoading.style.display = 'none';
+        showToast('Errore di rete', 'error');
+    }
+}
+
+function renderFavResults(films) {
+    favResults.innerHTML = '';
+    if (!films.length) {
+        favResults.innerHTML =
+            '<p style="color:var(--muted);font-size:13px;padding:10px 0;">Nessun risultato.</p>';
+        return;
+    }
+    films.forEach(f => {
+        const el = document.createElement('div');
+        el.className = 'film-result-item';
+        const poster = f.poster_path
+            ? `https://image.tmdb.org/t/p/w200${f.poster_path}`
+            : '/Pulse/IMG/default_list.jpg';
+        el.innerHTML = `
+            <img src="${poster}" class="film-result-poster" alt="">
+            <div class="film-result-info">
+                <strong>${f.title}</strong>
+                <small>${f.year ?? ''}</small>
+            </div>
+        `;
+        el.addEventListener('click', () => addPreferito(f));
+        favResults.appendChild(el);
+    });
+}
+
+async function addPreferito(film) {
+    try {
+        const res = await fetch(BACKEND_PREF, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'aggiungi_preferito', tmdb_id: film.id })
+        });
+        const json = await res.json();
+        if (json.ok) {
+            showToast('✓ Preferito aggiunto', 'success');
+            closeFavModal();
+            setTimeout(() => location.reload(), 700);
+        } else {
+            showToast('Errore: ' + (json.error ?? 'sconosciuto'), 'error');
+        }
+    } catch (err) {
+        showToast('Errore di connessione', 'error');
+    }
+}
+
+// ESC chiude qualsiasi modal aperta
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    closeModal();
+    closeConfirm();
+    closeFavModal();
 });
 </script>
