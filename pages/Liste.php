@@ -1,97 +1,272 @@
 <?php
-session_start();
-require 'Database.php';
+// pages/Liste.php — Lista delle liste, tab Mie / Seguiti
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: Login.php");
-    exit();
-}
+require_once 'Database.php';
+$pdo   = getConnection();
+$my_id = (int)$_SESSION['user_id'];
 
-$pdo = getConnection();
-$my_id = $_SESSION['user_id'];
+$filtro = $_GET['filtro'] ?? 'mie';   // mie | seguiti
 
-// 1. Recupero tutte le liste dell'utente
-// Usiamo una subquery o una JOIN per contare quanti film ci sono in ogni lista
-try {
+// ── Conteggio seguiti ────────────────────────────────────────────
+$stmtSeg = $pdo->prepare("SELECT COUNT(*) FROM Segui WHERE IDSeguitore = ?");
+$stmtSeg->execute([$my_id]);
+$cnt_seguiti = (int)$stmtSeg->fetchColumn();
+
+// ── Carica liste ─────────────────────────────────────────────────
+$liste = [];
+if ($filtro === 'mie') {
     $stmt = $pdo->prepare("
-        SELECT L.*, 
-        (SELECT COUNT(*) FROM Lista_Film WHERE IDLista = L.IDLista) as TotaleFilm,
-        (SELECT F.Poster_Path FROM Lista_Film LF 
-         JOIN Film F ON LF.IDFilm = F.ID 
-         WHERE LF.IDLista = L.IDLista LIMIT 1) as AnteprimaPoster
-        FROM Lista L 
-        WHERE L.IDUtente = ? 
+        SELECT L.IDLista, L.Titolo, L.Descrizione, L.IDUtente,
+               U.Username,
+               (SELECT COUNT(*) FROM Lista_Film LF WHERE LF.IDLista = L.IDLista) AS TotaleFilm,
+               (SELECT F.Poster_Path FROM Lista_Film LF2
+                JOIN Film F ON LF2.IDFilm = F.ID
+                WHERE LF2.IDLista = L.IDLista ORDER BY LF2.Posizione ASC LIMIT 1) AS Cover1,
+               (SELECT F.Poster_Path FROM Lista_Film LF2
+                JOIN Film F ON LF2.IDFilm = F.ID
+                WHERE LF2.IDLista = L.IDLista ORDER BY LF2.Posizione ASC LIMIT 1 OFFSET 1) AS Cover2,
+               (SELECT F.Poster_Path FROM Lista_Film LF2
+                JOIN Film F ON LF2.IDFilm = F.ID
+                WHERE LF2.IDLista = L.IDLista ORDER BY LF2.Posizione ASC LIMIT 1 OFFSET 2) AS Cover3
+        FROM Lista L
+        JOIN Utente U ON L.IDUtente = U.ID
+        WHERE L.IDUtente = ?
         ORDER BY L.IDLista DESC
     ");
     $stmt->execute([$my_id]);
-    $liste = $stmt->fetchAll();
-} catch (PDOException $e) {
-    die("Errore: " . $e->getMessage());
+} else {
+    $stmt = $pdo->prepare("
+        SELECT L.IDLista, L.Titolo, L.Descrizione, L.IDUtente,
+               U.Username, U.Avatar_URL,
+               (SELECT COUNT(*) FROM Lista_Film LF WHERE LF.IDLista = L.IDLista) AS TotaleFilm,
+               (SELECT F.Poster_Path FROM Lista_Film LF2
+                JOIN Film F ON LF2.IDFilm = F.ID
+                WHERE LF2.IDLista = L.IDLista ORDER BY LF2.Posizione ASC LIMIT 1) AS Cover1,
+               (SELECT F.Poster_Path FROM Lista_Film LF2
+                JOIN Film F ON LF2.IDFilm = F.ID
+                WHERE LF2.IDLista = L.IDLista ORDER BY LF2.Posizione ASC LIMIT 1 OFFSET 1) AS Cover2,
+               (SELECT F.Poster_Path FROM Lista_Film LF2
+                JOIN Film F ON LF2.IDFilm = F.ID
+                WHERE LF2.IDLista = L.IDLista ORDER BY LF2.Posizione ASC LIMIT 1 OFFSET 2) AS Cover3
+        FROM Lista L
+        JOIN Utente U ON L.IDUtente = U.ID
+        WHERE L.IDUtente IN (SELECT IDSeguito FROM Segui WHERE IDSeguitore = ?)
+        ORDER BY L.IDLista DESC
+        LIMIT 80
+    ");
+    $stmt->execute([$my_id]);
+}
+$liste = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+function listaAvatarUrl(?string $val, string $username): string {
+    if ($val && !str_starts_with($val, 'http')) return '/Pulse/IMG/avatars/' . $val;
+    return $val ?? "https://ui-avatars.com/api/?name=" . urlencode($username) . "&background=8b5cf6&color=fff&size=80";
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="utf-8">
-    <title>Pulse • Le mie Liste</title>
-    <link rel="stylesheet" href="../CSS/Home.css">
-    <link rel="stylesheet" href="../CSS/Liste.css">
-</head>
-<body>
-
 <div class="app">
-    <aside class="left">
-        <div class="brand"><div class="logo"></div><h1>Pulse</h1></div>
-        <nav class="nav">
-            <a href="home.php"><span class="ico">⌂</span><span class="label">Home</span></a>
-            <a href="cerca.php"><span class="ico">⌕</span><span class="label">Cerca</span></a>
-            <a href="community.php"><span class="ico">👥</span><span class="label">Community</span></a>
-            <a href="crea.php"><span class="ico">＋</span><span class="label">Crea</span></a>
-            <a href="notifiche.php"><span class="ico">🔔</span><span class="label">Notifiche</span></a>
-            <a class="active" href="liste.php"><span class="ico">≡</span><span class="label">Liste</span></a>
-            <a href="recensioni.php"><span class="ico">✍</span><span class="label">Recensioni</span></a>
-            <a href="profilo.php"><span class="ico">☺</span><span class="label">Profilo</span></a>
-        </nav>
-    </aside>
+    <?php require 'aside.php'; ?>
 
-    <main class="center">
-        <header class="list-header">
+    <main class="center lt-center">
+
+        <!-- ── HEADER ── -->
+        <header class="lt-header">
             <div>
-                <h2>Le tue Liste</h2>
-                <p>Organizza i tuoi film preferiti o crea maratone a tema.</p>
+                <h1 class="lt-title">
+                    <i class="bi bi-collection-fill" style="color:var(--accent)"></i>
+                    Liste
+                </h1>
+                <p class="lt-subtitle">
+                    <?php if ($filtro === 'mie'): ?>
+                        Le tue raccolte · <strong><?= count($liste) ?></strong>
+                    <?php else: ?>
+                        Liste di chi segui · <strong><?= count($liste) ?></strong>
+                    <?php endif; ?>
+                </p>
             </div>
-            <a href="nuova_lista.php" class="btn-create">+ Crea Nuova Lista</a>
+
+            <div class="lt-header-right">
+                <!-- Tab filtro -->
+                <div class="lt-filter-tabs">
+                    <a href="/Pulse/liste?filtro=mie"
+                       class="lt-filter-tab <?= $filtro === 'mie' ? 'active' : '' ?>">
+                        <i class="bi bi-person-fill"></i> Le mie
+                    </a>
+                    <a href="/Pulse/liste?filtro=seguiti"
+                       class="lt-filter-tab <?= $filtro === 'seguiti' ? 'active' : '' ?>">
+                        <i class="bi bi-people-fill"></i> Seguiti
+                    </a>
+                </div>
+
+                <!-- Crea nuova lista (solo tab mie) -->
+                <?php if ($filtro === 'mie'): ?>
+                <button class="lt-create-btn" onclick="openCreateModal()">
+                    <i class="bi bi-plus-lg"></i> Nuova lista
+                </button>
+                <?php endif; ?>
+            </div>
         </header>
 
-        <section class="grid-liste">
-            <?php if (count($liste) > 0): ?>
-                <?php foreach ($liste as $lista): 
-                    $poster = $lista['AnteprimaPoster'] 
-                              ? "https://image.tmdb.org/t/p/w500" . $lista['AnteprimaPoster'] 
-                              : "../IMG/default_list.jpg";
-                ?>
-                    <div class="list-card" onclick="location.href='dettaglio_lista.php?id=<?= $lista['IDLista'] ?>'">
-                        <div class="list-stack">
-                            <img src="<?= $poster ?>" alt="Cover" class="list-cover">
-                            <div class="stack-layer layer-1"></div>
-                            <div class="stack-layer layer-2"></div>
-                        </div>
-                        <div class="list-info">
-                            <h3><?= htmlspecialchars($lista['Titolo']) ?></h3>
-                            <span><?= $lista['TotaleFilm'] ?> film</span>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+        <!-- ── EMPTY STATES ── -->
+        <?php if ($filtro === 'seguiti' && $cnt_seguiti === 0): ?>
+        <div class="lt-empty">
+            <i class="bi bi-people" style="font-size:48px;color:var(--muted)"></i>
+            <p>Non stai seguendo nessuno.</p>
+            <a href="/Pulse/cerca/utenti" class="lt-cta-btn">
+                <i class="bi bi-search"></i> Cerca persone
+            </a>
+        </div>
+
+        <?php elseif (empty($liste)): ?>
+        <div class="lt-empty">
+            <i class="bi bi-collection" style="font-size:48px;color:var(--muted)"></i>
+            <?php if ($filtro === 'mie'): ?>
+                <p>Non hai ancora nessuna lista.</p>
+                <button class="lt-cta-btn" onclick="openCreateModal()">
+                    <i class="bi bi-plus-circle"></i> Crea la prima lista
+                </button>
             <?php else: ?>
-                <div class="empty-lists">
-                    <p>Non hai ancora creato nessuna lista.</p>
-                    <small>Crea la tua prima lista per raccogliere i film che ami!</small>
-                </div>
+                <p>Le persone che segui non hanno ancora liste.</p>
             <?php endif; ?>
-        </section>
+        </div>
+
+        <?php else: ?>
+        <!-- ── GRIGLIA LISTE ── -->
+        <div class="lt-grid">
+            <?php foreach ($liste as $l):
+                $covers = array_filter([
+                    $l['Cover1'] ? "https://image.tmdb.org/t/p/w200" . $l['Cover1'] : null,
+                    $l['Cover2'] ? "https://image.tmdb.org/t/p/w200" . $l['Cover2'] : null,
+                    $l['Cover3'] ? "https://image.tmdb.org/t/p/w200" . $l['Cover3'] : null,
+                ]);
+                $isOwn = (int)$l['IDUtente'] === $my_id;
+            ?>
+            <div class="lt-card" onclick="location.href='/Pulse/lista?id=<?= (int)$l['IDLista'] ?>'">
+
+                <!-- Stack poster stile Letterboxd -->
+                <div class="lt-card-covers lt-covers-<?= count($covers) ?>">
+                    <?php if (empty($covers)): ?>
+                        <div class="lt-cover-placeholder">
+                            <i class="bi bi-collection"></i>
+                        </div>
+                    <?php else: foreach ($covers as $c): ?>
+                        <img src="<?= htmlspecialchars($c) ?>" alt="" class="lt-cover-img" loading="lazy">
+                    <?php endforeach; endif; ?>
+                </div>
+
+                <!-- Info -->
+                <div class="lt-card-body">
+                    <?php if ($filtro === 'seguiti'): ?>
+                    <div class="lt-card-author">
+                        <img src="<?= htmlspecialchars(listaAvatarUrl($l['Avatar_URL'] ?? null, $l['Username'])) ?>"
+                             alt="" class="lt-author-avatar">
+                        <span>@<?= htmlspecialchars($l['Username']) ?></span>
+                    </div>
+                    <?php endif; ?>
+
+                    <h3 class="lt-card-title"><?= htmlspecialchars($l['Titolo']) ?></h3>
+                    <?php if (!empty($l['Descrizione'])): ?>
+                        <p class="lt-card-desc"><?= htmlspecialchars(mb_substr($l['Descrizione'], 0, 70)) ?><?= mb_strlen($l['Descrizione']) > 70 ? '…' : '' ?></p>
+                    <?php endif; ?>
+                    <div class="lt-card-meta">
+                        <span><i class="bi bi-film"></i> <?= (int)$l['TotaleFilm'] ?> film</span>
+                        <?php if ($isOwn): ?>
+                            <span class="lt-card-mine"><i class="bi bi-pencil"></i> Modifica</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+
     </main>
 </div>
 
-</body>
-</html>
+<!-- ── MODAL CREA LISTA ───────────────────────────────────────────── -->
+<div id="lt-create-modal" class="lt-modal-overlay" onclick="closeCreateModal(event)">
+    <div class="lt-modal-box">
+        <button class="lt-modal-close" onclick="closeCreateModal(null)">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <h2 class="lt-modal-title">
+            <i class="bi bi-plus-circle" style="color:var(--accent)"></i>
+            Nuova lista
+        </h2>
+
+        <div class="lt-form-group">
+            <label class="lt-form-label">Titolo *</label>
+            <input type="text" id="lt-new-titolo" class="lt-form-input"
+                   placeholder="Es. Migliori film del 2024" maxlength="255">
+        </div>
+        <div class="lt-form-group">
+            <label class="lt-form-label">Descrizione</label>
+            <textarea id="lt-new-desc" class="lt-form-textarea"
+                      placeholder="Una breve descrizione della tua lista…" maxlength="255" rows="3"></textarea>
+        </div>
+
+        <div class="lt-modal-footer">
+            <button class="lt-btn-ghost" onclick="closeCreateModal(null)">Annulla</button>
+            <button class="lt-btn-accent" id="lt-create-submit" onclick="submitCreate()">
+                <i class="bi bi-plus-lg"></i> Crea lista
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── TOAST ──────────────────────────────────────────────────────── -->
+<div id="lt-toast" class="lt-toast"></div>
+
+<script>
+const BACKEND = '/Pulse/backend/GestioneListe.php';
+
+function showToast(msg, type = 'ok') {
+    const t = document.getElementById('lt-toast');
+    t.textContent = msg;
+    t.className = 'lt-toast show ' + (type === 'error' ? 'error' : '');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.className = 'lt-toast', 3000);
+}
+
+// ── Modale crea ──────────────────────────────
+function openCreateModal() {
+    document.getElementById('lt-create-modal').classList.add('open');
+    document.getElementById('lt-new-titolo').focus();
+    document.body.style.overflow = 'hidden';
+}
+function closeCreateModal(e) {
+    if (e && e.target !== document.getElementById('lt-create-modal')) return;
+    document.getElementById('lt-create-modal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+async function submitCreate() {
+    const titolo = document.getElementById('lt-new-titolo').value.trim();
+    const desc   = document.getElementById('lt-new-desc').value.trim();
+    if (!titolo) { showToast('Inserisci un titolo', 'error'); return; }
+
+    const btn = document.getElementById('lt-create-submit');
+    btn.disabled = true;
+    try {
+        const res  = await fetch(BACKEND, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'crea_lista', titolo, descrizione: desc })
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error ?? 'Errore');
+        // Naviga alla lista appena creata
+        window.location.href = '/Pulse/lista?id=' + json.lista_id;
+    } catch (err) {
+        showToast(err.message, 'error');
+        btn.disabled = false;
+    }
+}
+
+// Enter nel titolo → submit
+document.getElementById('lt-new-titolo')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitCreate();
+});
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeCreateModal(null);
+});
+</script>

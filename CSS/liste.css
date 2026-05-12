@@ -1,0 +1,653 @@
+/* ═══════════════════════════════════════════════════
+   PULSE — Liste.css
+   Stile per Lista.php e Liste.php
+   ═══════════════════════════════════════════════════ */
+
+/* ── Layout center ─────────────────────────────── */
+.lt-center { padding-bottom: 60px; }
+
+/* ── Header Liste (pagina lista) ───────────────── */
+.lt-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 8px 0 20px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.lt-title {
+    font-size: 22px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.lt-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+}
+.lt-subtitle strong { color: var(--text); }
+
+.lt-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Tab filtro mie/seguiti */
+.lt-filter-tabs {
+    display: flex;
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.lt-filter-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: background .2s, color .2s;
+}
+.lt-filter-tab:hover { color: var(--text); background: rgba(255,255,255,.05); }
+.lt-filter-tab.active {
+    background: rgba(139,92,246,.18);
+    color: var(--accent);
+}
+
+/* Bottone crea lista */
+.lt-create-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+}
+.lt-create-btn:hover  { background: #7c3aed; }
+.lt-create-btn:active { transform: scale(.97); }
+
+/* ── Empty state ───────────────────────────────── */
+.lt-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 80px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 15px;
+}
+.lt-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 22px;
+    border-radius: 24px;
+    border: none;
+    cursor: pointer;
+    transition: background .2s;
+}
+.lt-cta-btn:hover { background: #7c3aed; }
+
+/* ══════════════════════════════════════════════════
+   GRIGLIA LISTE (Liste.php)
+   ══════════════════════════════════════════════════ */
+.lt-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+/* ── Card lista ────────────────────────────────── */
+.lt-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+}
+.lt-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,.4);
+}
+
+/* ── Stack cover stile Letterboxd ──────────────── */
+.lt-card-covers {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/2;
+    background: rgba(255,255,255,.04);
+    overflow: hidden;
+}
+
+/* 1 poster: fullwidth */
+.lt-covers-1 .lt-cover-img {
+    width: 100%; height: 100%; object-fit: cover;
+}
+
+/* 2 poster: 50/50 */
+.lt-covers-2 { display: grid; grid-template-columns: 1fr 1fr; }
+.lt-covers-2 .lt-cover-img { width: 100%; height: 100%; object-fit: cover; }
+
+/* 3 poster: 2/3 sinistra, 1/3 destra diviso in due */
+.lt-covers-3 { display: grid; grid-template-columns: 2fr 1fr; }
+.lt-covers-3 .lt-cover-img:first-child { grid-row: span 2; width:100%; height:100%; object-fit:cover; }
+.lt-covers-3 .lt-cover-img:not(:first-child) { width:100%; height:100%; object-fit:cover; }
+
+/* 4 poster: 2x2 */
+.lt-covers-4 { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.lt-covers-4 .lt-cover-img { width:100%; height:100%; object-fit:cover; }
+
+.lt-cover-placeholder {
+    width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    color: var(--muted); font-size: 36px;
+    background: rgba(255,255,255,.03);
+}
+
+/* ── Info card ──────────────────────────────────── */
+.lt-card-body { padding: 14px; }
+
+.lt-card-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--muted);
+}
+.lt-author-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%; object-fit: cover;
+    border: 1px solid var(--line);
+}
+
+.lt-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.lt-card-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.lt-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    gap: 8px;
+}
+.lt-card-mine {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════
+   DETTAGLIO LISTA (Lista.php)
+   ══════════════════════════════════════════════════ */
+.lt-back { margin-bottom: 16px; }
+.lt-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    transition: color .15s;
+}
+.lt-back-link:hover { color: var(--accent); }
+
+/* ── Header dettaglio ──────────────────────────── */
+.lt-detail-header {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+}
+
+/* Cover mosaico nel dettaglio */
+.lt-detail-covers {
+    flex-shrink: 0;
+    width: 200px;
+    height: 130px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255,255,255,.04);
+}
+.lt-detail-covers .lt-cover-img { width:100%; height:100%; object-fit:cover; }
+
+/* 2 poster */
+.lt-detail-covers.lt-covers-2 { display:grid; grid-template-columns:1fr 1fr; }
+/* 3 poster */
+.lt-detail-covers.lt-covers-3 { display:grid; grid-template-columns:2fr 1fr; }
+.lt-detail-covers.lt-covers-3 .lt-cover-img:first-child { grid-row:span 2; }
+/* 4 poster */
+.lt-detail-covers.lt-covers-4 { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+
+.lt-detail-info { flex: 1; min-width: 200px; }
+
+.lt-detail-meta-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.lt-detail-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+}
+.lt-detail-owner {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+}
+.lt-detail-meta-sub {
+    font-size: 12px;
+    color: var(--muted);
+}
+.lt-detail-title {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 8px;
+}
+.lt-detail-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 16px;
+    white-space: pre-wrap;
+}
+.lt-muted { font-style: italic; }
+
+.lt-detail-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ── Barra aggiunta film ────────────────────────── */
+.lt-add-section {
+    margin-bottom: 24px;
+    position: relative;
+}
+.lt-add-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 16px;
+    transition: border-color .2s;
+}
+.lt-add-bar:focus-within { border-color: var(--accent); }
+.lt-add-icon { color: var(--muted); font-size: 16px; flex-shrink:0; }
+.lt-add-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+}
+.lt-add-input::placeholder { color: var(--muted); }
+.lt-search-loader { color: var(--accent); display:flex; align-items:center; }
+
+/* Risultati ricerca */
+.lt-search-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0; right: 0;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    z-index: 50;
+    box-shadow: 0 12px 32px rgba(0,0,0,.5);
+    max-height: 380px;
+    overflow-y: auto;
+}
+.lt-no-results {
+    padding: 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.lt-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background .15s;
+    border-bottom: 1px solid var(--line);
+}
+.lt-result-item:last-child { border-bottom: none; }
+.lt-result-item:hover { background: rgba(255,255,255,.05); }
+.lt-result-item.adding { opacity: .5; pointer-events: none; }
+
+.lt-result-poster {
+    width: 36px;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+    background: #111;
+}
+.lt-result-info { flex: 1; min-width: 0; }
+.lt-result-title {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+.lt-result-year { font-size: 12px; color: var(--muted); }
+.lt-result-add {
+    background: rgba(139,92,246,.15);
+    border: 1px solid rgba(139,92,246,.3);
+    color: var(--accent);
+    border-radius: 50%;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 13px;
+    transition: background .15s;
+    flex-shrink: 0;
+}
+.lt-result-add:hover { background: var(--accent); color: #fff; }
+
+/* ── Lista film ─────────────────────────────────── */
+.lt-films-section { }
+
+.lt-films-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.lt-film-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    transition: background .15s;
+    position: relative;
+}
+.lt-film-row:hover { background: rgba(255,255,255,.04); }
+
+/* Drag handle */
+.lt-drag-handle {
+    color: rgba(255,255,255,.2);
+    font-size: 16px;
+    cursor: grab;
+    padding: 4px 2px;
+    flex-shrink: 0;
+    transition: color .15s;
+}
+.lt-drag-handle:active { cursor: grabbing; }
+.lt-film-row:hover .lt-drag-handle { color: var(--muted); }
+
+/* Ghost durante il drag */
+.lt-ghost { opacity: .35; background: rgba(139,92,246,.12) !important; border-radius: 10px; }
+
+/* Numero posizione */
+.lt-film-num {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 700;
+    width: 24px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* Poster */
+.lt-film-poster-wrap {
+    flex-shrink: 0;
+    width: 46px;
+}
+.lt-film-poster {
+    width: 46px;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: 6px;
+    display: block;
+    transition: opacity .15s;
+}
+.lt-film-poster:hover { opacity: .8; }
+.lt-film-poster-empty {
+    width: 46px;
+    aspect-ratio: 2/3;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.05);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 18px;
+}
+
+/* Info film */
+.lt-film-info { flex: 1; min-width: 0; }
+.lt-film-title {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color .15s;
+}
+.lt-film-title:hover { color: var(--accent); }
+.lt-film-year {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* Rimuovi film */
+.lt-remove-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,.2);
+    cursor: pointer;
+    font-size: 13px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, color .15s;
+    flex-shrink: 0;
+    opacity: 0;
+}
+.lt-film-row:hover .lt-remove-btn { opacity: 1; }
+.lt-remove-btn:hover { background: rgba(239,68,68,.15); color: var(--danger); }
+
+/* Animazione add */
+@keyframes lt-slide-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════════════════
+   PULSANTI COMUNI
+   ══════════════════════════════════════════════════ */
+.lt-btn-ghost {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 16px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    color: var(--muted);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: background .2s, color .2s;
+}
+.lt-btn-ghost:hover { background: rgba(255,255,255,.1); color: var(--text); }
+
+.lt-btn-accent {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 18px;
+    background: var(--accent);
+    border: none; border-radius: 9px;
+    color: #fff;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    transition: background .2s;
+}
+.lt-btn-accent:hover { background: #7c3aed; }
+
+.lt-btn-danger {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 16px;
+    background: rgba(239,68,68,.1);
+    border: 1px solid rgba(239,68,68,.3);
+    border-radius: 9px;
+    color: var(--danger);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: background .2s;
+}
+.lt-btn-danger:hover { background: rgba(239,68,68,.2); }
+
+.lt-btn-danger-solid {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 18px;
+    background: var(--danger);
+    border: none; border-radius: 9px;
+    color: #fff;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    transition: background .2s;
+}
+.lt-btn-danger-solid:hover { background: #dc2626; }
+
+/* ══════════════════════════════════════════════════
+   MODALE
+   ══════════════════════════════════════════════════ */
+.lt-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+}
+.lt-modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.lt-modal-box {
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 28px;
+    max-width: 480px; width: 100%;
+    position: relative;
+    box-shadow: 0 24px 60px rgba(0,0,0,.55);
+    transform: translateY(14px);
+    transition: transform .25s;
+    max-height: 80vh; overflow-y: auto;
+}
+.lt-modal-overlay.open .lt-modal-box { transform: translateY(0); }
+.lt-modal-box--sm { max-width: 380px; }
+
+.lt-modal-close {
+    position: absolute; top: 16px; right: 16px;
+    background: rgba(255,255,255,.08); border: none;
+    color: var(--text); width: 32px; height: 32px;
+    border-radius: 50%; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s;
+}
+.lt-modal-close:hover { background: rgba(255,255,255,.15); }
+
+.lt-modal-title {
+    font-size: 18px; font-weight: 800;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+}
+.lt-modal-footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    margin-top: 24px;
+}
+
+/* Form */
+.lt-form-group { margin-bottom: 16px; }
+.lt-form-label {
+    display: block; font-size: 12px; font-weight: 700;
+    color: var(--muted); text-transform: uppercase;
+    letter-spacing: .06em; margin-bottom: 6px;
+}
+.lt-form-input, .lt-form-textarea {
+    width: 100%;
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 14px; font-family: inherit;
+    outline: none;
+    transition: border-color .2s;
+    resize: vertical;
+}
+.lt-form-input:focus, .lt-form-textarea:focus { border-color: var(--accent); }
+.lt-form-input::placeholder, .lt-form-textarea::placeholder { color: var(--muted); }
+
+/* ══════════════════════════════════════════════════
+   TOAST
+   ══════════════════════════════════════════════════ */
+.lt-toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 12px 22px;
+    border-radius: 30px;
+    font-size: 14px; font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s, transform .25s;
+    white-space: nowrap;
+    z-index: 99999;
+}
+.lt-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: all; }
+.lt-toast.error { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.3); color: var(--danger); }

@@ -63,7 +63,8 @@ $routes = [
     'crea_log'         => 'Crea.php',
     'film'             => 'Film.php',
     'persona'          => 'Persona.php',
-    'utente'           => 'Profilo.php',            // ← CAMBIATO (era UtentePubblico.php)
+    'utente'           => 'Profilo.php',   
+    'lista'            => 'Lista.php',         
 ];
  
 // ── CSS per pagina (sezione da aggiornare) ──
@@ -74,7 +75,9 @@ $pageCSS = match($page) {
     'crea', 'crea_log'            => 'CSS/Crea.css',
     'profilo'                     => 'CSS/Profilo.css',
     'modifica-profilo'            => 'CSS/ModificaProfilo.css',  // ← AGGIUNTO
-    'recensioni'                  => 'CSS/Recensioni.css',       // ← AGGIUNTO
+    'recensioni'                  => 'CSS/Recensioni.css', 
+    'home'                        => 'CSS/HomeFeed.css',    
+    'liste', 'lista'              => 'CSS/Liste.css',
     default                       => null,
 };
 

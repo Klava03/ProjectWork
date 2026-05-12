@@ -1,0 +1,567 @@
+/* ═══════════════════════════════════════════════════
+   PULSE — HomeFeed.css
+   Feed stile Instagram: post grandi, scroll verticale
+   ═══════════════════════════════════════════════════ */
+
+/* ── Layout center ─────────────────────────────── */
+.hf-center {
+    padding-bottom: 60px;
+}
+
+.hf-topbar {
+    padding: 8px 0 16px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+}
+
+.hf-title {
+    font-size: 22px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ── Sidebar destra ────────────────────────────── */
+.hf-right {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: 20px;
+    height: fit-content;
+}
+
+.hf-side-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px;
+}
+
+.hf-side-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.hf-sug-list { display: flex; flex-direction: column; gap: 12px; }
+
+.hf-sug-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.hf-sug-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.hf-sug-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid var(--line);
+}
+
+.hf-sug-name {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hf-sug-meta { font-size: 11px; color: var(--muted); }
+
+.hf-follow-btn {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    padding: 4px 12px;
+    white-space: nowrap;
+    transition: background .2s, color .2s;
+}
+.hf-follow-btn:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+.hf-side-links {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 2;
+}
+.hf-side-links a {
+    color: var(--muted);
+    transition: color .15s;
+}
+.hf-side-links a:hover { color: var(--accent); }
+
+/* ── Feed container ────────────────────────────── */
+.hf-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding-top: 8px;
+}
+
+/* ── Singolo post ─────────────────────────────── */
+.hf-post {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+}
+.hf-post:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px rgba(0,0,0,.45);
+}
+
+/* Header utente */
+.hf-post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 12px;
+    gap: 12px;
+}
+
+.hf-user-link {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+}
+
+.hf-avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+    flex-shrink: 0;
+}
+
+.hf-user-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.hf-username {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hf-date {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+}
+
+/* Badge voto nell'header */
+.hf-voto-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #facc15;
+    background: rgba(250,204,21,.12);
+    border: 1px solid rgba(250,204,21,.25);
+    border-radius: 20px;
+    padding: 5px 12px;
+    flex-shrink: 0;
+}
+.hf-voto-badge i { font-size: 11px; }
+
+/* ── Media (poster / backdrop) ─────────────────── */
+.hf-post-media {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Con backdrop → formato cinematografico 16:9 */
+.hf-post-media.has-backdrop {
+    aspect-ratio: 16 / 9;
+    background: #000;
+}
+
+.hf-backdrop {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: .85;
+}
+
+/* Poster sovrapposto in basso-sinistra */
+.hf-poster-overlay {
+    position: absolute;
+    bottom: 52px; left: 16px;
+    width: 72px;
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,.15);
+    box-shadow: 0 4px 16px rgba(0,0,0,.7);
+    z-index: 3;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+}
+
+/* Solo poster → centrato, formato 4:3 con padding */
+.hf-post-media.has-poster {
+    aspect-ratio: 3 / 4;
+    background: #0a0a0f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hf-poster-solo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: .9;
+}
+
+/* Gradient overlay dal basso */
+.hf-media-gradient {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 55%;
+    background: linear-gradient(to top, rgba(10,10,18,.95) 0%, transparent 100%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Titolo film sovrapposto al media */
+.hf-media-caption {
+    position: absolute;
+    bottom: 16px; left: 16px; right: 16px;
+    z-index: 4;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+/* Quando c'è poster overlay, sposta il titolo a destra */
+.has-backdrop .hf-media-caption {
+    left: 100px;
+}
+
+.hf-film-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,.8);
+    line-height: 1.2;
+    transition: color .15s;
+}
+.hf-film-title:hover { color: var(--accent); }
+
+.hf-film-anno {
+    font-size: 12px;
+    color: rgba(255,255,255,.55);
+    flex-shrink: 0;
+}
+
+/* ── Footer post ──────────────────────────────── */
+.hf-post-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px 14px;
+    gap: 12px;
+    border-top: 1px solid var(--line);
+    flex-wrap: wrap;
+}
+
+/* Stelle */
+.hf-stars { display: flex; gap: 2px; align-items: center; }
+
+.hf-star {
+    font-size: 17px;
+    transition: transform .1s;
+}
+.hf-star.full  { color: #facc15; }
+.hf-star.half  {
+    color: #facc15;
+    position: relative;
+    display: inline-block;
+}
+.hf-star.empty { color: rgba(255,255,255,.18); }
+
+.hf-no-rating {
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+}
+
+/* Azioni */
+.hf-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.hf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 7px 16px;
+    border: none;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    text-decoration: none;
+    line-height: 1;
+}
+.hf-btn:active { transform: scale(.97); }
+
+.hf-btn-ghost {
+    background: rgba(255,255,255,.06);
+    color: var(--muted);
+    border: 1px solid var(--line);
+}
+.hf-btn-ghost:hover {
+    background: rgba(255,255,255,.11);
+    color: var(--text);
+}
+
+.hf-btn-accent {
+    background: var(--accent);
+    color: #fff;
+}
+.hf-btn-accent:hover { background: #7c3aed; }
+
+.hf-no-rec {
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* ── Empty states ─────────────────────────────── */
+.hf-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 80px 20px;
+    text-align: center;
+}
+.hf-empty-title {
+    font-size: 18px;
+    font-weight: 700;
+}
+.hf-empty-sub {
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 280px;
+}
+.hf-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 22px;
+    border-radius: 24px;
+    transition: background .2s;
+}
+.hf-cta:hover { background: #7c3aed; }
+
+/* ── Modal recensione ─────────────────────────── */
+.hf-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+}
+.hf-modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.hf-modal-box {
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 28px;
+    max-width: 500px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 24px 60px rgba(0,0,0,.6);
+    transform: translateY(16px);
+    transition: transform .25s;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.hf-modal-overlay.open .hf-modal-box { transform: translateY(0); }
+
+.hf-modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: rgba(255,255,255,.08);
+    border: none;
+    color: var(--text);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s;
+}
+.hf-modal-close:hover { background: rgba(255,255,255,.15); }
+
+.hf-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.hf-modal-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+}
+
+.hf-modal-user {
+    font-size: 15px;
+    font-weight: 700;
+}
+.hf-modal-film {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+.hf-modal-stars {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 16px;
+}
+.hf-modal-stars .hf-star { font-size: 20px; }
+
+.hf-modal-testo {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.75;
+    white-space: pre-wrap;
+}
+
+/* ── Responsivo ────────────────────────────────── */
+@media (max-width: 1100px) {
+    .hf-right { display: none; }
+    .app { grid-template-columns: var(--w-left) minmax(0,1fr); }
+}
+
+@media (max-width: 680px) {
+    .hf-post-footer { flex-direction: column; align-items: flex-start; }
+    .hf-film-title  { font-size: 15px; }
+}
+
+/* ───────────────────────────────────────────────────
+   Aggiunta a HomeFeed.css: Like button + Toast
+   ─────────────────────────────────────────────────── */
+
+/* ── Like button ────────────────────────────────── */
+.hf-like-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 20px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .2s, color .2s, border-color .2s, transform .1s;
+    flex-shrink: 0;
+}
+.hf-like-btn:hover {
+    background: rgba(239,68,68,.1);
+    border-color: rgba(239,68,68,.3);
+    color: #f87171;
+}
+.hf-like-btn.liked {
+    background: rgba(239,68,68,.12);
+    border-color: rgba(239,68,68,.35);
+    color: #f87171;
+}
+.hf-like-btn.liked i { color: #ef4444; }
+.hf-like-btn:active { transform: scale(.95); }
+
+/* Animazione pop al click */
+@keyframes hf-pop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.35); }
+    70%  { transform: scale(.9); }
+    100% { transform: scale(1); }
+}
+.hf-like-pop i { animation: hf-pop .4s cubic-bezier(.36,.07,.19,.97) both; }
+
+/* ── Toast ──────────────────────────────────────── */
+.hf-toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 11px 20px;
+    border-radius: 30px;
+    font-size: 13px; font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s, transform .25s;
+    white-space: nowrap;
+    z-index: 99999;
+}
+.hf-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.hf-toast.error { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.3); color: var(--danger); }
+
+/* Caption shifted per backdrop con poster overlay */
+.hf-media-caption.shifted { left: 100px; }
