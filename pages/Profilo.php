@@ -210,29 +210,56 @@ if ($tab === 'seguiti') {
 // ══════════════════════════════════════════════
 //  TAB: LISTE (stile Letterboxd — 4 cover)
 // ══════════════════════════════════════════════
-$prof_liste = [];
+$prof_liste     = [];
+$prof_condivise = [];
+
 if ($tab === 'liste') {
+
+    // Liste create dall'utente del profilo
     $stmt_lt = $pdo->prepare("
-        SELECT
-            L.IDLista,
-            L.Titolo,
-            L.Descrizione,
-            (SELECT COUNT(*) FROM Lista_Film LF WHERE LF.IDLista = L.IDLista) AS TotaleFilm,
-            (SELECT F.Poster_Path FROM Lista_Film LF JOIN Film F ON LF.IDFilm = F.ID
-             WHERE LF.IDLista = L.IDLista LIMIT 1 OFFSET 0) AS Cover1,
-            (SELECT F.Poster_Path FROM Lista_Film LF JOIN Film F ON LF.IDFilm = F.ID
-             WHERE LF.IDLista = L.IDLista LIMIT 1 OFFSET 1) AS Cover2,
-            (SELECT F.Poster_Path FROM Lista_Film LF JOIN Film F ON LF.IDFilm = F.ID
-             WHERE LF.IDLista = L.IDLista LIMIT 1 OFFSET 2) AS Cover3,
-            (SELECT F.Poster_Path FROM Lista_Film LF JOIN Film F ON LF.IDFilm = F.ID
-             WHERE LF.IDLista = L.IDLista LIMIT 1 OFFSET 3) AS Cover4
+        SELECT L.IDLista, L.Titolo, L.Descrizione, L.IDUtente,
+               (SELECT COUNT(*) FROM Lista_Film LF WHERE LF.IDLista = L.IDLista) AS TotaleFilm,
+               (SELECT F.Poster_Path FROM Lista_Film LF JOIN Film F ON LF.IDFilm = F.ID
+                WHERE LF.IDLista = L.IDLista ORDER BY LF.Posizione ASC LIMIT 1 OFFSET 0) AS Cover1,
+               (SELECT F.Poster_Path FROM Lista_Film LF JOIN Film F ON LF.IDFilm = F.ID
+                WHERE LF.IDLista = L.IDLista ORDER BY LF.Posizione ASC LIMIT 1 OFFSET 1) AS Cover2,
+               (SELECT F.Poster_Path FROM Lista_Film LF JOIN Film F ON LF.IDFilm = F.ID
+                WHERE LF.IDLista = L.IDLista ORDER BY LF.Posizione ASC LIMIT 1 OFFSET 2) AS Cover3,
+               (SELECT F.Poster_Path FROM Lista_Film LF JOIN Film F ON LF.IDFilm = F.ID
+                WHERE LF.IDLista = L.IDLista ORDER BY LF.Posizione ASC LIMIT 1 OFFSET 3) AS Cover4
         FROM Lista L
         WHERE L.IDUtente = ?
         ORDER BY L.IDLista DESC
     ");
     $stmt_lt->execute([$profile_id]);
     $prof_liste = $stmt_lt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Liste condivise (solo nel proprio profilo)
+    if ($is_own) {
+        $stmt_sh = $pdo->prepare("
+            SELECT L.IDLista, L.Titolo, L.Descrizione, L.IDUtente,
+                   U.Username  AS owner_username,
+                   U.Avatar_URL AS owner_avatar,
+                   (SELECT COUNT(*) FROM Lista_Film LF WHERE LF.IDLista = L.IDLista) AS TotaleFilm,
+                   (SELECT F.Poster_Path FROM Lista_Film LF JOIN Film F ON LF.IDFilm = F.ID
+                    WHERE LF.IDLista = L.IDLista ORDER BY LF.Posizione ASC LIMIT 1 OFFSET 0) AS Cover1,
+                   (SELECT F.Poster_Path FROM Lista_Film LF JOIN Film F ON LF.IDFilm = F.ID
+                    WHERE LF.IDLista = L.IDLista ORDER BY LF.Posizione ASC LIMIT 1 OFFSET 1) AS Cover2,
+                   (SELECT F.Poster_Path FROM Lista_Film LF JOIN Film F ON LF.IDFilm = F.ID
+                    WHERE LF.IDLista = L.IDLista ORDER BY LF.Posizione ASC LIMIT 1 OFFSET 2) AS Cover3,
+                   (SELECT F.Poster_Path FROM Lista_Film LF JOIN Film F ON LF.IDFilm = F.ID
+                    WHERE LF.IDLista = L.IDLista ORDER BY LF.Posizione ASC LIMIT 1 OFFSET 3) AS Cover4
+            FROM Lista_Membro LM
+            JOIN Lista   L ON LM.IDLista = L.IDLista
+            JOIN Utente  U ON L.IDUtente = U.ID
+            WHERE LM.IDUtente = ?
+            ORDER BY L.IDLista DESC
+        ");
+        $stmt_sh->execute([$my_id]);
+        $prof_condivise = $stmt_sh->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
+
 
 // ══════════════════════════════════════════════
 //  TAB: ATTIVITÀ
@@ -483,13 +510,13 @@ $mesi   = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'O
                                 <div class="diary-actions">
                                     <button class="diary-btn"
                                         onclick='openEditModal(<?= htmlspecialchars(json_encode([
-                                            "log_id"     => (int)$log["log_id"],
-                                            "data"       => $log["data_vis"],
-                                            "voto"       => $voto,
-                                            "recensione" => $log["Recensione"] ?? "",
-                                            "liked"      => $liked,
-                                            "title"      => $log["Title"],
-                                        ]), ENT_QUOTES) ?>)'>
+                                                                    "log_id"     => (int)$log["log_id"],
+                                                                    "data"       => $log["data_vis"],
+                                                                    "voto"       => $voto,
+                                                                    "recensione" => $log["Recensione"] ?? "",
+                                                                    "liked"      => $liked,
+                                                                    "title"      => $log["Title"],
+                                                                ]), ENT_QUOTES) ?>)'>
                                         <i class="bi bi-pencil"></i> Modifica
                                     </button>
                                     <button class="diary-btn del"
@@ -504,7 +531,7 @@ $mesi   = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'O
                 </div>
             <?php endif; ?>
 
-        <!-- ══════════════════════════════════════
+            <!-- ══════════════════════════════════════
              TAB: FILM GUARDATI
              ══════════════════════════════════════ -->
         <?php elseif ($tab === 'watched'): ?>
@@ -527,55 +554,134 @@ $mesi   = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'O
                 </div>
             <?php endif; ?>
 
-        <!-- ══════════════════════════════════════
-             TAB: LISTE — stile Letterboxd
+            <!-- ══════════════════════════════════════
+             TAB: LISTE
              ══════════════════════════════════════ -->
-        <?php elseif ($tab === 'liste'): ?>
-            <?php if (!$prof_liste): ?>
+            <?php elseif ($tab === 'liste'): ?>
+            <?php
+            // Helper per risolvere cover url
+            function profResolveCovers(array $pl): array
+            {
+                return array_values(array_filter([
+                    !empty($pl['Cover1']) ? "https://image.tmdb.org/t/p/w200" . $pl['Cover1'] : null,
+                    !empty($pl['Cover2']) ? "https://image.tmdb.org/t/p/w200" . $pl['Cover2'] : null,
+                    !empty($pl['Cover3']) ? "https://image.tmdb.org/t/p/w200" . $pl['Cover3'] : null,
+                    !empty($pl['Cover4']) ? "https://image.tmdb.org/t/p/w200" . $pl['Cover4'] : null,
+                ]));
+            }
+            function profResolveOwnerAvatar(?string $val, string $username): string
+            {
+                if ($val && !str_starts_with($val, 'http')) return '/Pulse/IMG/avatars/' . $val;
+                return $val ?: "https://ui-avatars.com/api/?name=" . urlencode($username) . "&background=8b5cf6&color=fff&size=80";
+            }
+            ?>
+
+            <!-- Sezione: Liste create -->
+            
+ 
+            <!-- ── LISTE PROPRIE ── -->
+            <?php if ($is_own): ?>
+                <div class="prof-section-header">
+                    <span class="prof-section-label">
+                        <i class="bi bi-collection-fill" style="color:var(--accent)"></i>
+                        Le mie liste
+                    </span>
+                    <a href="/Pulse/liste?filtro=mie" class="prof-section-link">
+                        Tutte <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            <?php endif; ?>
+ 
+            <?php if (empty($prof_liste)): ?>
                 <p class="prof-empty">
                     <?= $is_own
-                        ? 'Non hai ancora nessuna lista. <a href="/Pulse/liste" style="color:var(--accent);font-weight:700;">Crea la prima →</a>'
+                        ? 'Non hai ancora liste. <a href="/Pulse/liste" style="color:var(--accent);font-weight:700">Crea la prima →</a>'
                         : '@' . htmlspecialchars($profile_user['Username']) . ' non ha ancora liste.' ?>
                 </p>
             <?php else: ?>
-                <div class="prof-liste-lbxd">
+                <div class="prof-lbxd-grid">
                     <?php foreach ($prof_liste as $pl):
-                        $covers = array_filter([
-                            $pl['Cover1'] ? "https://image.tmdb.org/t/p/w200" . $pl['Cover1'] : null,
-                            $pl['Cover2'] ? "https://image.tmdb.org/t/p/w200" . $pl['Cover2'] : null,
-                            $pl['Cover3'] ? "https://image.tmdb.org/t/p/w200" . $pl['Cover3'] : null,
-                            $pl['Cover4'] ? "https://image.tmdb.org/t/p/w200" . $pl['Cover4'] : null,
-                        ]);
+                        $covers = profResolveCovers($pl);
                     ?>
-                    <a href="/Pulse/lista?id=<?= $pl['IDLista'] ?>" class="lbxd-list-card">
-                        <div class="lbxd-list-covers">
+                    <a href="/Pulse/lista?id=<?= (int)$pl['IDLista'] ?>" class="prof-lbxd-card">
+                        <div class="prof-lbxd-covers">
                             <?php if ($covers): ?>
-                                <?php foreach (array_values($covers) as $c): ?>
-                                    <img src="<?= $c ?>" alt="" class="lbxd-cover-img" loading="lazy">
+                                <?php foreach ($covers as $c): ?>
+                                    <img src="<?= htmlspecialchars($c) ?>" alt="" class="prof-lbxd-img" loading="lazy">
                                 <?php endforeach; ?>
                                 <?php for ($i = count($covers); $i < 4; $i++): ?>
-                                    <div class="lbxd-cover-empty"></div>
+                                    <div class="prof-lbxd-empty"></div>
                                 <?php endfor; ?>
                             <?php else: ?>
-                                <div class="lbxd-cover-noimg">
-                                    <i class="bi bi-collection"></i>
-                                </div>
+                                <div class="prof-lbxd-noimg"><i class="bi bi-collection"></i></div>
                             <?php endif; ?>
-                            <div class="lbxd-covers-gradient"></div>
+                            <div class="prof-lbxd-gradient"></div>
                         </div>
-                        <div class="lbxd-list-info">
-                            <span class="lbxd-list-title"><?= htmlspecialchars($pl['Titolo']) ?></span>
-                            <span class="lbxd-list-count"><?= (int)$pl['TotaleFilm'] ?> film</span>
+                        <div class="prof-lbxd-info">
+                            <span class="prof-lbxd-title"><?= htmlspecialchars($pl['Titolo']) ?></span>
+                            <span class="prof-lbxd-count"><?= (int)$pl['TotaleFilm'] ?> film</span>
                             <?php if (!empty($pl['Descrizione'])): ?>
-                                <span class="lbxd-list-desc"><?= htmlspecialchars($pl['Descrizione']) ?></span>
+                                <span class="prof-lbxd-desc"><?= htmlspecialchars(mb_substr($pl['Descrizione'], 0, 60)) ?><?= mb_strlen($pl['Descrizione']) > 60 ? '…' : '' ?></span>
                             <?php endif; ?>
                         </div>
                     </a>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
-
-        <!-- ══════════════════════════════════════
+ 
+            <!-- ── LISTE CONDIVISE (solo profilo proprio) ── -->
+            <?php if ($is_own && !empty($prof_condivise)): ?>
+ 
+                <div class="prof-section-header" style="margin-top:36px">
+                    <span class="prof-section-label">
+                        <i class="bi bi-people-fill" style="color:#60a5fa"></i>
+                        Liste condivise con me
+                    </span>
+                    <a href="/Pulse/liste?filtro=condivise" class="prof-section-link">
+                        Tutte <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+ 
+                <div class="prof-lbxd-grid">
+                    <?php foreach ($prof_condivise as $pl):
+                        $covers   = profResolveCovers($pl);
+                        $ownerAv  = profResolveOwnerAvatar($pl['owner_avatar'], $pl['owner_username']);
+                    ?>
+                    <a href="/Pulse/lista?id=<?= (int)$pl['IDLista'] ?>" class="prof-lbxd-card">
+                        <div class="prof-lbxd-covers">
+                            <?php if ($covers): ?>
+                                <?php foreach ($covers as $c): ?>
+                                    <img src="<?= htmlspecialchars($c) ?>" alt="" class="prof-lbxd-img" loading="lazy">
+                                <?php endforeach; ?>
+                                <?php for ($i = count($covers); $i < 4; $i++): ?>
+                                    <div class="prof-lbxd-empty"></div>
+                                <?php endfor; ?>
+                            <?php else: ?>
+                                <div class="prof-lbxd-noimg"><i class="bi bi-collection"></i></div>
+                            <?php endif; ?>
+                            <div class="prof-lbxd-gradient"></div>
+                            <span class="prof-lbxd-shared-badge">
+                                <i class="bi bi-people-fill"></i> Condivisa
+                            </span>
+                        </div>
+                        <div class="prof-lbxd-info">
+                            <!-- Owner avatar + username -->
+                            <div class="prof-lbxd-owner">
+                                <img src="<?= htmlspecialchars($ownerAv) ?>"
+                                     alt="@<?= htmlspecialchars($pl['owner_username']) ?>"
+                                     class="prof-lbxd-owner-avatar"
+                                     onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($pl['owner_username']) ?>&background=8b5cf6&color=fff&size=80'">
+                                <span class="prof-lbxd-owner-name">@<?= htmlspecialchars($pl['owner_username']) ?></span>
+                            </div>
+                            <span class="prof-lbxd-title"><?= htmlspecialchars($pl['Titolo']) ?></span>
+                            <span class="prof-lbxd-count"><?= (int)$pl['TotaleFilm'] ?> film</span>
+                        </div>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+ 
+            <?php endif; ?>
+            <!-- ══════════════════════════════════════
              TAB: ATTIVITÀ
              ══════════════════════════════════════ -->
         <?php elseif ($tab === 'attivita'): ?>
@@ -587,10 +693,10 @@ $mesi   = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'O
                         $ts  = $a['ts'] ?? null;
                         $ago = $ts ? timeAgo($ts) : '';
                     ?>
-                    <div class="act-row">
+                        <div class="act-row">
 
-                        <?php if ($a['tipo'] === 'log'): ?>
-                            <?php
+                            <?php if ($a['tipo'] === 'log'): ?>
+                                <?php
                                 $poster = $a['film_poster']
                                     ? "https://image.tmdb.org/t/p/w92" . $a['film_poster']
                                     : null;
@@ -604,60 +710,60 @@ $mesi   = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'O
                                 }
                                 $anno = !empty($a['film_anno']) ? substr($a['film_anno'], 0, 4) : '';
                                 $slug = slugify($a['film_title']);
-                            ?>
-                            <?php if ($poster): ?>
-                                <a href="/Pulse/film/<?= $a['film_tmdb_id'] ?>-<?= $slug ?>" class="act-poster-link">
-                                    <img src="<?= $poster ?>" alt="" class="act-poster">
-                                </a>
-                            <?php else: ?>
-                                <div class="act-poster act-poster-empty"><i class="bi bi-film"></i></div>
+                                ?>
+                                <?php if ($poster): ?>
+                                    <a href="/Pulse/film/<?= $a['film_tmdb_id'] ?>-<?= $slug ?>" class="act-poster-link">
+                                        <img src="<?= $poster ?>" alt="" class="act-poster">
+                                    </a>
+                                <?php else: ?>
+                                    <div class="act-poster act-poster-empty"><i class="bi bi-film"></i></div>
+                                <?php endif; ?>
+                                <div class="act-body">
+                                    <span class="act-text">
+                                        Hai guardato e votato
+                                        <a href="/Pulse/film/<?= $a['film_tmdb_id'] ?>-<?= $slug ?>" class="act-film-link">
+                                            <?= htmlspecialchars($a['film_title']) ?>
+                                        </a>
+                                        <?php if ($anno): ?><span class="act-anno"><?= $anno ?></span><?php endif; ?>
+                                        <?php if ($stars): ?><span class="act-stars"><?= $stars ?></span><?php endif; ?>
+                                    </span>
+                                </div>
+
+                            <?php elseif ($a['tipo'] === 'segui'): ?>
+                                <div class="act-icon-wrap act-icon-follow">
+                                    <i class="bi bi-person-plus-fill"></i>
+                                </div>
+                                <div class="act-body">
+                                    <span class="act-text">
+                                        Hai iniziato a seguire
+                                        <a href="/Pulse/utente/<?= rawurlencode($a['target_username']) ?>" class="act-film-link">
+                                            @<?= htmlspecialchars($a['target_username']) ?>
+                                        </a>
+                                    </span>
+                                </div>
+
+                            <?php elseif ($a['tipo'] === 'lista'): ?>
+                                <div class="act-icon-wrap act-icon-lista">
+                                    <i class="bi bi-collection-fill"></i>
+                                </div>
+                                <div class="act-body">
+                                    <span class="act-text">
+                                        Ha creato la lista
+                                        <a href="/Pulse/lista?id=<?= $a['lista_id'] ?>" class="act-film-link">
+                                            <?= htmlspecialchars($a['lista_titolo']) ?>
+                                        </a>
+                                    </span>
+                                </div>
+
                             <?php endif; ?>
-                            <div class="act-body">
-                                <span class="act-text">
-                                    Hai guardato e votato
-                                    <a href="/Pulse/film/<?= $a['film_tmdb_id'] ?>-<?= $slug ?>" class="act-film-link">
-                                        <?= htmlspecialchars($a['film_title']) ?>
-                                    </a>
-                                    <?php if ($anno): ?><span class="act-anno"><?= $anno ?></span><?php endif; ?>
-                                    <?php if ($stars): ?><span class="act-stars"><?= $stars ?></span><?php endif; ?>
-                                </span>
-                            </div>
 
-                        <?php elseif ($a['tipo'] === 'segui'): ?>
-                            <div class="act-icon-wrap act-icon-follow">
-                                <i class="bi bi-person-plus-fill"></i>
-                            </div>
-                            <div class="act-body">
-                                <span class="act-text">
-                                    Hai iniziato a seguire
-                                    <a href="/Pulse/utente/<?= rawurlencode($a['target_username']) ?>" class="act-film-link">
-                                        @<?= htmlspecialchars($a['target_username']) ?>
-                                    </a>
-                                </span>
-                            </div>
-
-                        <?php elseif ($a['tipo'] === 'lista'): ?>
-                            <div class="act-icon-wrap act-icon-lista">
-                                <i class="bi bi-collection-fill"></i>
-                            </div>
-                            <div class="act-body">
-                                <span class="act-text">
-                                    Ha creato la lista
-                                    <a href="/Pulse/lista?id=<?= $a['lista_id'] ?>" class="act-film-link">
-                                        <?= htmlspecialchars($a['lista_titolo']) ?>
-                                    </a>
-                                </span>
-                            </div>
-
-                        <?php endif; ?>
-
-                        <span class="act-ago"><?= $ago ?></span>
-                    </div>
+                            <span class="act-ago"><?= $ago ?></span>
+                        </div>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
 
-        <!-- ══════════════════════════════════════
+            <!-- ══════════════════════════════════════
              TAB: FOLLOWER / SEGUITI
              ══════════════════════════════════════ -->
         <?php else:
@@ -792,14 +898,19 @@ $mesi   = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'O
         const followBtn = document.getElementById('followBtn');
         if (followBtn) {
             followBtn.addEventListener('click', async () => {
-                const uid      = parseInt(followBtn.dataset.id);
+                const uid = parseInt(followBtn.dataset.id);
                 const following = followBtn.dataset.following === '1';
                 followBtn.disabled = true;
                 try {
-                    const res  = await fetch(BACKEND_SEG, {
+                    const res = await fetch(BACKEND_SEG, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: following ? 'unfollow' : 'follow', user_id: uid })
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            action: following ? 'unfollow' : 'follow',
+                            user_id: uid
+                        })
                     });
                     const json = await res.json();
                     if (!json.ok) throw new Error(json.error ?? 'Errore');
@@ -832,14 +943,19 @@ $mesi   = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'O
     // ════════════════════════════════════════════
     document.querySelectorAll('.prof-follow-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
-            const uid      = parseInt(btn.dataset.id);
+            const uid = parseInt(btn.dataset.id);
             const following = btn.dataset.following === '1';
             btn.disabled = true;
             try {
-                const res  = await fetch(BACKEND_SEG, {
+                const res = await fetch(BACKEND_SEG, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: following ? 'unfollow' : 'follow', user_id: uid })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: following ? 'unfollow' : 'follow',
+                        user_id: uid
+                    })
                 });
                 const json = await res.json();
                 if (!json.ok) throw new Error(json.error ?? 'Errore');
@@ -870,13 +986,13 @@ $mesi   = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'O
             constructor(pickerId, hiddenId, labelId) {
                 this.picker = document.getElementById(pickerId);
                 this.hidden = document.getElementById(hiddenId);
-                this.label  = document.getElementById(labelId);
-                this.val    = 0;
+                this.label = document.getElementById(labelId);
+                this.val = 0;
                 if (!this.picker) return;
-                this.stars  = [...this.picker.querySelectorAll('.log-star')];
+                this.stars = [...this.picker.querySelectorAll('.log-star')];
                 this.stars.forEach(s => {
-                    s.addEventListener('click',      e => this._click(s, e));
-                    s.addEventListener('mousemove',  e => this._hover(s, e));
+                    s.addEventListener('click', e => this._click(s, e));
+                    s.addEventListener('mousemove', e => this._hover(s, e));
                     s.addEventListener('mouseleave', () => this._render(this.val));
                 });
             }
@@ -884,36 +1000,40 @@ $mesi   = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'O
                 const r = s.getBoundingClientRect();
                 return parseFloat(s.dataset.val) - ((e.clientX - r.left) < r.width / 2 ? 0.5 : 0);
             }
-            _hover(s, e) { this._render(this._halfVal(s, e), true); }
-            _click(s, e) { this.set(this._halfVal(s, e)); }
+            _hover(s, e) {
+                this._render(this._halfVal(s, e), true);
+            }
+            _click(s, e) {
+                this.set(this._halfVal(s, e));
+            }
             _render(v, hover = false) {
                 this.stars.forEach(s => {
                     const sv = parseFloat(s.dataset.val);
                     s.className = 'log-star';
-                    if (v >= sv)       s.classList.add(hover ? 's-hover-full' : 's-full');
+                    if (v >= sv) s.classList.add(hover ? 's-hover-full' : 's-full');
                     else if (v >= sv - .5) s.classList.add(hover ? 's-hover-half' : 's-half');
                 });
             }
             set(v) {
-                this.val           = v;
-                this.hidden.value  = v || '';
+                this.val = v;
+                this.hidden.value = v || '';
                 this.label.textContent = v ? v.toFixed(1) + ' ★' : 'Nessun voto';
                 this._render(v);
             }
         }
         const editStar = new StarPicker('editStarPicker', 'editVoto', 'editStarLabel');
 
-        document.getElementById('editLikeToggle').addEventListener('click', function () {
+        document.getElementById('editLikeToggle').addEventListener('click', function() {
             document.getElementById('editLiked').value = this.classList.toggle('liked') ? '1' : '0';
         });
 
         function openEditModal(log) {
-            document.getElementById('editLogId').value        = log.log_id;
-            document.getElementById('editData').value         = log.data;
-            document.getElementById('editRecensione').value   = log.recensione;
+            document.getElementById('editLogId').value = log.log_id;
+            document.getElementById('editData').value = log.data;
+            document.getElementById('editRecensione').value = log.recensione;
             document.getElementById('modalFilmTitle').textContent = 'Modifica — ' + log.title;
             editStar.set(log.voto || 0);
-            document.getElementById('editLiked').value        = log.liked ? '1' : '0';
+            document.getElementById('editLiked').value = log.liked ? '1' : '0';
             document.getElementById('editLikeToggle').classList.toggle('liked', !!log.liked);
             document.getElementById('editModal').classList.add('open');
         }
@@ -924,21 +1044,26 @@ $mesi   = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'O
 
         async function saveEdit() {
             const log_id = +document.getElementById('editLogId').value;
-            if (!log_id) { showToast('Errore: ID log mancante', 'error'); return; }
+            if (!log_id) {
+                showToast('Errore: ID log mancante', 'error');
+                return;
+            }
             const payload = {
-                action:     'modifica_log',
+                action: 'modifica_log',
                 log_id,
-                data:       document.getElementById('editData').value,
-                voto:       parseFloat(document.getElementById('editVoto').value) || null,
+                data: document.getElementById('editData').value,
+                voto: parseFloat(document.getElementById('editVoto').value) || null,
                 recensione: document.getElementById('editRecensione').value.trim(),
-                liked:      document.getElementById('editLiked').value === '1',
+                liked: document.getElementById('editLiked').value === '1',
             };
             const btn = document.getElementById('btnSalvaEdit');
             btn.disabled = true;
             try {
-                const res  = await fetch(BACKEND_LOG, {
+                const res = await fetch(BACKEND_LOG, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(payload)
                 });
                 const json = await res.json();
@@ -957,19 +1082,25 @@ $mesi   = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'O
         ['editModal', 'confirmModal'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('click', e => {
-                if (e.target === el) { closeModal(); closeConfirm(); }
+                if (e.target === el) {
+                    closeModal();
+                    closeConfirm();
+                }
             });
         });
 
         document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') { closeModal(); closeConfirm(); }
+            if (e.key === 'Escape') {
+                closeModal();
+                closeConfirm();
+            }
         });
 
         let _confirmCb = null;
 
         function showConfirm(title, text, onOk) {
             document.getElementById('confirmTitle').textContent = title;
-            document.getElementById('confirmText').textContent  = text;
+            document.getElementById('confirmText').textContent = text;
             _confirmCb = onOk;
             document.getElementById('confirmModal').classList.add('open');
         }
@@ -995,16 +1126,21 @@ $mesi   = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'O
 
         async function doDeleteLog(id, btn) {
             try {
-                const res  = await fetch(BACKEND_LOG, {
+                const res = await fetch(BACKEND_LOG, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'elimina_log', log_id: id })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'elimina_log',
+                        log_id: id
+                    })
                 });
                 const json = await res.json();
                 if (json.ok) {
                     const row = btn.closest('.diary-entry');
                     row.style.transition = 'opacity .3s';
-                    row.style.opacity    = '0';
+                    row.style.opacity = '0';
                     setTimeout(() => row.remove(), 310);
                     showToast('Log eliminato.');
                 } else showToast('Errore: ' + (json.error ?? 'sconosciuto'), 'error');

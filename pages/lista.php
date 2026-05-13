@@ -1,5 +1,5 @@
 <?php
-// pages/Lista.php — Dettaglio lista singola (stile Letterboxd)
+// pages/Lista.php — Dettaglio lista singola
 
 require_once 'Database.php';
 $pdo   = getConnection();
@@ -29,6 +29,15 @@ if (!$lista) {
 
 $is_own = (int)$lista['IDUtente'] === $my_id;
 
+// ── Controlla se l'utente è membro invitato ──────────────────────
+$is_participant = false;
+if (!$is_own) {
+    $s = $pdo->prepare("SELECT 1 FROM Lista_Membro WHERE IDLista = ? AND IDUtente = ? LIMIT 1");
+    $s->execute([$lista_id, $my_id]);
+    $is_participant = (bool)$s->fetchColumn();
+}
+$can_edit = $is_own || $is_participant;
+
 // ── Avatar proprietario ──────────────────────────────────────────
 function listaResolveAvatar(?string $v, string $u): string {
     if (!$v) return "https://ui-avatars.com/api/?name=" . urlencode($u) . "&background=8b5cf6&color=fff&size=80";
@@ -36,6 +45,18 @@ function listaResolveAvatar(?string $v, string $u): string {
     return '/Pulse/IMG/avatars/' . $v;
 }
 $ownerAvatar = listaResolveAvatar($lista['Avatar_URL'], $lista['Username']);
+
+// ── Membri della lista ───────────────────────────────────────────
+$membri = [];
+$s = $pdo->prepare("
+    SELECT U.ID, U.Username, U.Avatar_URL
+    FROM Lista_Membro LM
+    JOIN Utente U ON LM.IDUtente = U.ID
+    WHERE LM.IDLista = ?
+    ORDER BY U.Username ASC
+");
+$s->execute([$lista_id]);
+$membri = $s->fetchAll(PDO::FETCH_ASSOC);
 
 // ── Film della lista in ordine ───────────────────────────────────
 $stmt = $pdo->prepare("
@@ -86,14 +107,38 @@ $covers = array_slice(array_filter(array_map(
                         <a href="/Pulse/utente/<?= urlencode($lista['Username']) ?>" class="lt-detail-owner">
                             @<?= htmlspecialchars($lista['Username']) ?>
                         </a>
-                        <div class="lt-detail-meta-sub">Lista · <?= $tot ?> film</div>
+                        <div class="lt-detail-meta-sub">Lista · <span id="lt-film-count"><?= $tot ?></span> film</div>
                     </div>
+
+                    <!-- Avatars membri -->
+                    <?php if (!empty($membri)): ?>
+                    <div class="lt-members-row">
+                        <?php foreach (array_slice($membri, 0, 4) as $m):
+                            $mav = listaResolveAvatar($m['Avatar_URL'], $m['Username']);
+                        ?>
+                            <img src="<?= htmlspecialchars($mav) ?>"
+                                 title="@<?= htmlspecialchars($m['Username']) ?>"
+                                 class="lt-member-pip" alt="">
+                        <?php endforeach; ?>
+                        <?php if (count($membri) > 4): ?>
+                            <span class="lt-member-pip-more">+<?= count($membri) - 4 ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($is_participant): ?>
+                        <span class="lt-member-badge">
+                            <i class="bi bi-people-fill"></i> Sei membro
+                        </span>
+                    <?php endif; ?>
                 </div>
 
+                <!-- Titolo — id usato da submitEdit() per aggiornare inline -->
                 <h1 class="lt-detail-title" id="lt-title-display">
                     <?= htmlspecialchars($lista['Titolo']) ?>
                 </h1>
 
+                <!-- Descrizione — id usato da submitEdit() -->
                 <?php if (!empty($lista['Descrizione'])): ?>
                     <p class="lt-detail-desc" id="lt-desc-display">
                         <?= nl2br(htmlspecialchars($lista['Descrizione'])) ?>
@@ -120,8 +165,8 @@ $covers = array_slice(array_filter(array_map(
             </div>
         </header>
 
-        <!-- ── AGGIUNGI FILM (solo owner) ── -->
-        <?php if ($is_own): ?>
+        <!-- ── AGGIUNGI FILM (owner O membro) ── -->
+        <?php if ($can_edit): ?>
             <section class="lt-add-section">
                 <div class="lt-add-bar">
                     <i class="bi bi-search lt-add-icon"></i>
@@ -142,7 +187,7 @@ $covers = array_slice(array_filter(array_map(
             <?php if (empty($films)): ?>
                 <div class="lt-empty" style="padding:60px 20px">
                     <i class="bi bi-film" style="font-size:48px;color:var(--muted)"></i>
-                    <p><?= $is_own ? 'La lista è vuota. Cerca un film qui sopra per aggiungerlo.' : 'Questa lista non ha ancora film.' ?></p>
+                    <p><?= $can_edit ? 'La lista è vuota. Cerca un film qui sopra per aggiungerlo.' : 'Questa lista non ha ancora film.' ?></p>
                 </div>
             <?php else: ?>
                 <div class="lt-films-list" id="lt-films-sortable">
@@ -152,11 +197,11 @@ $covers = array_slice(array_filter(array_map(
                             : null;
                         $anno = !empty($f['Release_Date']) ? substr($f['Release_Date'], 0, 4) : '';
                     ?>
-                        <div class="lt-film-row <?= $is_own ? 'sortable-item' : '' ?>"
+                        <div class="lt-film-row <?= $can_edit ? 'sortable-item' : '' ?>"
                             data-tmdb="<?= (int)$f['TMDB_ID'] ?>"
                             data-pos="<?= (int)$f['Posizione'] ?>">
 
-                            <?php if ($is_own): ?>
+                            <?php if ($can_edit): ?>
                                 <div class="lt-drag-handle" title="Trascina per riordinare">
                                     <i class="bi bi-grip-vertical"></i>
                                 </div>
@@ -185,7 +230,7 @@ $covers = array_slice(array_filter(array_map(
                                 <?php endif; ?>
                             </div>
 
-                            <?php if ($is_own): ?>
+                            <?php if ($can_edit): ?>
                                 <button class="lt-remove-btn"
                                     onclick="removeFilm(<?= (int)$f['TMDB_ID'] ?>, this)"
                                     title="Rimuovi dalla lista">
@@ -202,7 +247,7 @@ $covers = array_slice(array_filter(array_map(
 </div>
 
 <!-- ══════════════════════════════════════════
-     MODALI (solo owner)
+     MODALI — SOLO OWNER
      ══════════════════════════════════════════ -->
 <?php if ($is_own): ?>
 
@@ -280,12 +325,12 @@ $covers = array_slice(array_filter(array_map(
     </div>
 </div>
 
-<?php endif; ?>
+<?php endif; // $is_own — fine modali ?>
 
 <!-- Toast -->
 <div id="lt-toast" class="lt-toast"></div>
 
-<?php if ($is_own): ?>
+<?php if ($can_edit && !empty($films)): ?>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
 <?php endif; ?>
 
@@ -293,27 +338,26 @@ $covers = array_slice(array_filter(array_map(
 const BACKEND        = '/Pulse/backend/GestioneListe.php';
 const BACKEND_INVITI = '/Pulse/backend/gestioneinviti.php';
 const LISTA_ID       = <?= $lista_id ?>;
-const IS_OWN         = <?= $is_own ? 'true' : 'false' ?>;
+const IS_OWN         = <?= $is_own        ? 'true' : 'false' ?>;
+const IS_PARTICIPANT = <?= $is_participant ? 'true' : 'false' ?>;
+const CAN_EDIT       = IS_OWN || IS_PARTICIPANT;
 
 // ── Utility ──────────────────────────────────────────────────────
 function showToast(msg, type = 'ok') {
     const t = document.getElementById('lt-toast');
     t.textContent = msg;
-    t.className = 'lt-toast show ' + (type === 'error' ? 'error' : '');
+    t.className   = 'lt-toast show ' + (type === 'error' ? 'error' : '');
     clearTimeout(t._timer);
     t._timer = setTimeout(() => t.className = 'lt-toast', 3200);
 }
-
 function escHtml(str) {
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+    return String(str ?? '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Sortable drag & drop ──────────────────────────────────────────
-<?php if ($is_own && !empty($films)): ?>
+// ── Sortable (owner O membro) ─────────────────────────────────────
+<?php if ($can_edit && !empty($films)): ?>
 const sortEl = document.getElementById('lt-films-sortable');
 if (sortEl) {
     Sortable.create(sortEl, {
@@ -331,15 +375,15 @@ if (sortEl) {
                     body: JSON.stringify({ action: 'riordina', lista_id: LISTA_ID, ordine })
                 });
                 const json = await res.json();
-                if (!json.ok) showToast('Errore nel salvataggio ordine', 'error');
+                if (!json.ok) showToast('Errore salvataggio ordine', 'error');
             } catch { showToast('Errore di rete', 'error'); }
         }
     });
 }
 <?php endif; ?>
 
-// ── Ricerca e aggiunta film ───────────────────────────────────────
-<?php if ($is_own): ?>
+// ── Ricerca e aggiunta film (owner O membro) ─────────────────────
+<?php if ($can_edit): ?>
 let searchTimer;
 const searchInput   = document.getElementById('lt-film-search');
 const searchResults = document.getElementById('lt-search-results');
@@ -351,6 +395,10 @@ searchInput.addEventListener('input', () => {
     if (q.length < 2) { searchResults.innerHTML = ''; return; }
     loader.style.display = 'flex';
     searchTimer = setTimeout(() => doSearch(q), 400);
+});
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('.lt-add-section')) searchResults.innerHTML = '';
 });
 
 async function doSearch(q) {
@@ -402,21 +450,10 @@ async function addFilm(tmdb_id, el) {
 
         let sortable = document.getElementById('lt-films-sortable');
         if (!sortable) {
-            const section = document.querySelector('.lt-films-section');
-            section.innerHTML = '<div class="lt-films-list" id="lt-films-sortable"></div>';
+            document.querySelector('.lt-films-section').innerHTML =
+                '<div class="lt-films-list" id="lt-films-sortable"></div>';
             sortable = document.getElementById('lt-films-sortable');
-            Sortable.create(sortable, {
-                handle: '.lt-drag-handle', animation: 200, ghostClass: 'lt-ghost',
-                onEnd: async () => {
-                    const ordine = [...sortable.querySelectorAll('.sortable-item')].map(e => parseInt(e.dataset.tmdb));
-                    sortable.querySelectorAll('.lt-film-num').forEach((e, i) => e.textContent = i + 1);
-                    await fetch(BACKEND, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'riordina', lista_id: LISTA_ID, ordine })
-                    });
-                }
-            });
+            if (typeof Sortable !== 'undefined') initSortable(sortable);
         }
 
         const num = sortable.querySelectorAll('.sortable-item').length + 1;
@@ -424,31 +461,29 @@ async function addFilm(tmdb_id, el) {
         row.className    = 'lt-film-row sortable-item';
         row.dataset.tmdb = f.TMDB_ID;
         row.innerHTML = `
-            <div class="lt-drag-handle" title="Trascina per riordinare"><i class="bi bi-grip-vertical"></i></div>
+            <div class="lt-drag-handle"><i class="bi bi-grip-vertical"></i></div>
             <span class="lt-film-num">${num}</span>
             <a href="/Pulse/film/${f.TMDB_ID}" class="lt-film-poster-wrap">
-                ${poster
-                    ? `<img src="${poster}" alt="" class="lt-film-poster" loading="lazy">`
-                    : '<div class="lt-film-poster-empty"><i class="bi bi-film"></i></div>'}
+                ${poster ? `<img src="${poster}" alt="" class="lt-film-poster" loading="lazy">`
+                         : '<div class="lt-film-poster-empty"><i class="bi bi-film"></i></div>'}
             </a>
             <div class="lt-film-info">
                 <a href="/Pulse/film/${f.TMDB_ID}" class="lt-film-title">${escHtml(f.Title)}</a>
                 ${anno ? `<span class="lt-film-year">${anno}</span>` : ''}
             </div>
-            <button class="lt-remove-btn" onclick="removeFilm(${f.TMDB_ID}, this)" title="Rimuovi">
+            <button class="lt-remove-btn" onclick="removeFilm(${f.TMDB_ID}, this)">
                 <i class="bi bi-x-lg"></i>
             </button>`;
         sortable.appendChild(row);
-        row.style.animation = 'lt-slide-in .3s ease';
 
         el.classList.remove('adding');
         el.querySelector('.lt-result-add').innerHTML = '<i class="bi bi-check-lg"></i>';
         el.style.opacity = '.5';
         el.style.pointerEvents = 'none';
-        showToast(`"${f.Title}" aggiunto alla lista`);
-        updateCovers();
         searchInput.value = '';
         setTimeout(() => searchResults.innerHTML = '', 800);
+        updateMeta();
+        showToast(`"${f.Title}" aggiunto alla lista`);
     } catch {
         el.classList.remove('adding');
         showToast('Errore di rete', 'error');
@@ -457,7 +492,7 @@ async function addFilm(tmdb_id, el) {
 
 async function removeFilm(tmdb_id, btn) {
     const row   = btn.closest('.lt-film-row');
-    const title = row.querySelector('.lt-film-title')?.textContent ?? 'film';
+    const title = row.querySelector('.lt-film-title')?.textContent?.trim() ?? 'film';
     if (!confirm(`Rimuovere "${title}" dalla lista?`)) return;
     try {
         const res  = await fetch(BACKEND, {
@@ -473,19 +508,38 @@ async function removeFilm(tmdb_id, btn) {
         setTimeout(() => {
             row.remove();
             document.querySelectorAll('.lt-film-num').forEach((el, i) => el.textContent = i + 1);
-            updateCovers();
+            updateMeta();
         }, 260);
         showToast('Film rimosso');
     } catch { showToast('Errore di rete', 'error'); }
 }
 
-function updateCovers() {
-    const cnt    = document.querySelectorAll('.sortable-item').length;
-    const metaSub = document.querySelector('.lt-detail-meta-sub');
-    if (metaSub) metaSub.textContent = `Lista · ${cnt} film`;
+function initSortable(el) {
+    Sortable.create(el, {
+        handle: '.lt-drag-handle', animation: 200, ghostClass: 'lt-ghost',
+        onEnd: async () => {
+            const ordine = [...el.querySelectorAll('.sortable-item')].map(e => parseInt(e.dataset.tmdb));
+            el.querySelectorAll('.lt-film-num').forEach((e, i) => e.textContent = i + 1);
+            await fetch(BACKEND, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'riordina', lista_id: LISTA_ID, ordine })
+            });
+        }
+    });
 }
 
-// ── Modifica lista ────────────────────────────────────────────────
+function updateMeta() {
+    const cnt = document.querySelectorAll('.sortable-item').length;
+    const el  = document.getElementById('lt-film-count');
+    if (el) el.textContent = cnt;
+}
+<?php endif; ?>
+
+// ── Modali owner ─────────────────────────────────────────────────
+<?php if ($is_own): ?>
+
+// Modifica lista
 function openEditModal() {
     document.getElementById('lt-edit-modal').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -507,6 +561,7 @@ async function submitEdit() {
         });
         const json = await res.json();
         if (!json.ok) throw new Error(json.error ?? 'Errore');
+        // Aggiorna titolo e desc inline senza ricaricare
         document.getElementById('lt-title-display').textContent = titolo;
         const descEl = document.getElementById('lt-desc-display');
         if (descEl) descEl.textContent = desc || 'Aggiungi una descrizione…';
@@ -515,7 +570,7 @@ async function submitEdit() {
     } catch (err) { showToast(err.message, 'error'); }
 }
 
-// ── Elimina lista ─────────────────────────────────────────────────
+// Elimina lista
 function confirmDelete() {
     document.getElementById('lt-delete-modal').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -534,81 +589,59 @@ async function submitDelete() {
         });
         const json = await res.json();
         if (!json.ok) throw new Error(json.error ?? 'Errore');
-        window.location.href = '/Pulse/liste';
+        showToast('Lista eliminata');
+        setTimeout(() => window.location.href = '/Pulse/liste', 800);
     } catch (err) { showToast(err.message, 'error'); }
 }
 
-// ── Invito amici ──────────────────────────────────────────────────
+// Invita amici
 function openInviteModal() {
     document.getElementById('lt-invite-modal').classList.add('open');
     document.body.style.overflow = 'hidden';
     loadAmici();
 }
 function closeInviteModal(e) {
-    // BUG FIX: null check — il modal esiste solo per l'owner
     const modal = document.getElementById('lt-invite-modal');
     if (!modal) return;
     if (e && e.target !== modal) return;
     modal.classList.remove('open');
     document.body.style.overflow = '';
 }
-
 async function loadAmici() {
     const loading = document.getElementById('invite-loading');
     const list    = document.getElementById('invite-list');
     const empty   = document.getElementById('invite-empty');
-
     loading.style.display = 'flex';
     list.style.display    = 'none';
     empty.style.display   = 'none';
     list.innerHTML        = '';
-
     try {
         const res  = await fetch(`${BACKEND_INVITI}?action=lista_amici&lista_id=${LISTA_ID}`);
         const json = await res.json();
         loading.style.display = 'none';
-
-        if (!json.ok || !json.amici?.length) {
-            empty.style.display = 'flex';
-            return;
-        }
-
+        if (!json.ok || !json.amici?.length) { empty.style.display = 'flex'; return; }
         list.style.display = 'flex';
-        // BUG FIX: Avatar_URL già risolto server-side in gestioneinviti.php
         list.innerHTML = json.amici.map(u => `
             <div class="lt-invite-row" id="invite-row-${u.ID}">
-                <img src="${escHtml(u.avatar_url)}" alt="" class="lt-invite-avatar"
+                <img src="${escHtml(u.Avatar_URL)}" alt=""
+                     class="lt-invite-avatar"
                      onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(u.Username)}&background=8b5cf6&color=fff&size=80'">
                 <div class="lt-invite-info">
                     <strong>@${escHtml(u.Username)}</strong>
                 </div>
                 ${renderInviteBtn(u.ID, u.stato_invito)}
-            </div>
-        `).join('');
+            </div>`).join('');
     } catch {
         loading.style.display = 'none';
         empty.style.display   = 'flex';
-        empty.querySelector('p').textContent = 'Errore nel caricamento.';
     }
 }
-
 function renderInviteBtn(uid, stato) {
-    if (stato === 'accettato') {
-        return `<span class="lt-invite-stato membro"><i class="bi bi-check-circle-fill"></i> Membro</span>`;
-    }
-    if (stato === 'pending') {
-        return `<span class="lt-invite-stato pending"><i class="bi bi-clock"></i> Invitato</span>`;
-    }
-    if (stato === 'rifiutato') {
-        return `<button class="lt-invite-btn" onclick="invitaAmico(${uid}, this)">
-            <i class="bi bi-arrow-repeat"></i> Ri-invita
-        </button>`;
-    }
-    return `<button class="lt-invite-btn" onclick="invitaAmico(${uid}, this)">
-        <i class="bi bi-person-plus"></i> Invita
-    </button>`;
+    if (stato === 'accettato') return `<span class="lt-invite-stato membro"><i class="bi bi-check-circle-fill"></i> Membro</span>`;
+    if (stato === 'pending')   return `<span class="lt-invite-stato pending"><i class="bi bi-clock"></i> Invitato</span>`;
+    if (stato === 'rifiutato') return `<button class="lt-invite-btn" onclick="invitaAmico(${uid},this)"><i class="bi bi-arrow-repeat"></i> Ri-invita</button>`;
+    return `<button class="lt-invite-btn" onclick="invitaAmico(${uid},this)"><i class="bi bi-person-plus"></i> Invita</button>`;
 }
-
 async function invitaAmico(user_id, btn) {
     btn.disabled  = true;
     btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i>';
@@ -620,9 +653,7 @@ async function invitaAmico(user_id, btn) {
         });
         const json = await res.json();
         if (!json.ok) throw new Error(json.error ?? 'Errore');
-        btn.outerHTML = `<span class="lt-invite-stato pending">
-            <i class="bi bi-clock"></i> Invitato
-        </span>`;
+        btn.outerHTML = `<span class="lt-invite-stato pending"><i class="bi bi-clock"></i> Invitato</span>`;
         showToast('Invito inviato!');
     } catch (err) {
         showToast(err.message, 'error');
@@ -631,14 +662,61 @@ async function invitaAmico(user_id, btn) {
     }
 }
 
-// ── Escape — chiude tutti i modali ────────────────────────────────
-// BUG FIX: un solo listener unificato invece di due
+// Escape chiude tutti i modali
 document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     closeEditModal(null);
     closeDeleteModal(null);
-    closeInviteModal(null); // null-safe grazie al fix nella funzione
+    closeInviteModal(null);
 });
 
-<?php endif; // is_own ?>
+<?php endif; // $is_own — fine JS modali ?>
 </script>
+
+<style>
+/* ── Pill "Sei membro" ───────────── */
+.lt-member-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    background: rgba(59,130,246,.15);
+    border: 1px solid rgba(59,130,246,.3);
+    color: #60a5fa;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: auto;
+}
+/* ── Fila avatars membri ─────────── */
+.lt-members-row {
+    display: flex;
+    align-items: center;
+    margin-left: 12px;
+}
+.lt-member-pip {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--bg);
+    margin-left: -8px;
+    transition: transform .15s;
+}
+.lt-member-pip:first-child { margin-left: 0; }
+.lt-member-pip:hover { transform: scale(1.15); z-index: 1; }
+.lt-member-pip-more {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.1);
+    border: 2px solid var(--bg);
+    margin-left: -8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--muted);
+}
+</style>

@@ -1,19 +1,25 @@
 <?php
-// pages/Liste.php — Lista delle liste, tab Mie / Seguiti
+// pages/Liste.php — Lista delle liste, tab Mie / Condivise / Seguiti
 
 require_once 'Database.php';
 $pdo   = getConnection();
 $my_id = (int)$_SESSION['user_id'];
 
-$filtro = $_GET['filtro'] ?? 'mie';   // mie | seguiti |
+$filtro = $_GET['filtro'] ?? 'mie';   // mie | condivise | seguiti
 
-// ── Conteggio seguiti ────────────────────────────────────────────
+// ── Conteggio seguiti ─────────────────────────────────────────────
 $stmtSeg = $pdo->prepare("SELECT COUNT(*) FROM Segui WHERE IDSeguitore = ?");
 $stmtSeg->execute([$my_id]);
 $cnt_seguiti = (int)$stmtSeg->fetchColumn();
 
-// ── Carica liste ─────────────────────────────────────────────────
+// ── Conteggio liste condivise di cui sono membro ──────────────────
+$stmtMem = $pdo->prepare("SELECT COUNT(*) FROM Lista_Membro WHERE IDUtente = ?");
+$stmtMem->execute([$my_id]);
+$cnt_condivise = (int)$stmtMem->fetchColumn();
+
+// ── Carica liste ──────────────────────────────────────────────────
 $liste = [];
+
 if ($filtro === 'mie') {
     $stmt = $pdo->prepare("
         SELECT L.IDLista, L.Titolo, L.Descrizione, L.IDUtente,
@@ -34,6 +40,30 @@ if ($filtro === 'mie') {
         ORDER BY L.IDLista DESC
     ");
     $stmt->execute([$my_id]);
+
+} elseif ($filtro === 'condivise') {
+    $stmt = $pdo->prepare("
+        SELECT L.IDLista, L.Titolo, L.Descrizione, L.IDUtente,
+               U.Username, U.Avatar_URL,
+               (SELECT COUNT(*) FROM Lista_Film LF WHERE LF.IDLista = L.IDLista) AS TotaleFilm,
+               (SELECT F.Poster_Path FROM Lista_Film LF2
+                JOIN Film F ON LF2.IDFilm = F.ID
+                WHERE LF2.IDLista = L.IDLista ORDER BY LF2.Posizione ASC LIMIT 1) AS Cover1,
+               (SELECT F.Poster_Path FROM Lista_Film LF2
+                JOIN Film F ON LF2.IDFilm = F.ID
+                WHERE LF2.IDLista = L.IDLista ORDER BY LF2.Posizione ASC LIMIT 1 OFFSET 1) AS Cover2,
+               (SELECT F.Poster_Path FROM Lista_Film LF2
+                JOIN Film F ON LF2.IDFilm = F.ID
+                WHERE LF2.IDLista = L.IDLista ORDER BY LF2.Posizione ASC LIMIT 1 OFFSET 2) AS Cover3
+        FROM Lista_Membro LM
+        JOIN Lista L ON LM.IDLista = L.IDLista
+        JOIN Utente U ON L.IDUtente = U.ID
+        WHERE LM.IDUtente = ?
+        ORDER BY L.IDLista DESC
+        LIMIT 80
+    ");
+    $stmt->execute([$my_id]);
+
 } else {
     $stmt = $pdo->prepare("
         SELECT L.IDLista, L.Titolo, L.Descrizione, L.IDUtente,
@@ -79,6 +109,8 @@ function listaAvatarUrl(?string $val, string $username): string {
                 <p class="lt-subtitle">
                     <?php if ($filtro === 'mie'): ?>
                         Le tue raccolte · <strong><?= count($liste) ?></strong>
+                    <?php elseif ($filtro === 'condivise'): ?>
+                        Liste condivise con te · <strong><?= count($liste) ?></strong>
                     <?php else: ?>
                         Liste di chi segui · <strong><?= count($liste) ?></strong>
                     <?php endif; ?>
@@ -86,19 +118,24 @@ function listaAvatarUrl(?string $val, string $username): string {
             </div>
 
             <div class="lt-header-right">
-                <!-- Tab filtro -->
                 <div class="lt-filter-tabs">
                     <a href="/Pulse/liste?filtro=mie"
                        class="lt-filter-tab <?= $filtro === 'mie' ? 'active' : '' ?>">
                         <i class="bi bi-person-fill"></i> Le mie
                     </a>
+                    <a href="/Pulse/liste?filtro=condivise"
+                       class="lt-filter-tab <?= $filtro === 'condivise' ? 'active' : '' ?>">
+                        <i class="bi bi-people-fill"></i> Condivise
+                        <?php if ($cnt_condivise > 0): ?>
+                            <span class="lt-tab-count"><?= $cnt_condivise ?></span>
+                        <?php endif; ?>
+                    </a>
                     <a href="/Pulse/liste?filtro=seguiti"
                        class="lt-filter-tab <?= $filtro === 'seguiti' ? 'active' : '' ?>">
-                        <i class="bi bi-people-fill"></i> Seguiti
+                        <i class="bi bi-eye-fill"></i> Seguiti
                     </a>
                 </div>
 
-                <!-- Crea nuova lista (solo tab mie) -->
                 <?php if ($filtro === 'mie'): ?>
                 <button class="lt-create-btn" onclick="openCreateModal()">
                     <i class="bi bi-plus-lg"></i> Nuova lista
@@ -115,6 +152,13 @@ function listaAvatarUrl(?string $val, string $username): string {
             <a href="/Pulse/cerca/utenti" class="lt-cta-btn">
                 <i class="bi bi-search"></i> Cerca persone
             </a>
+        </div>
+
+        <?php elseif ($filtro === 'condivise' && $cnt_condivise === 0): ?>
+        <div class="lt-empty">
+            <i class="bi bi-people" style="font-size:48px;color:var(--muted)"></i>
+            <p>Non sei ancora membro di nessuna lista condivisa.</p>
+            <small style="color:var(--muted);margin-top:4px;display:block">Quando qualcuno ti invita in una sua lista, la trovi qui.</small>
         </div>
 
         <?php elseif (empty($liste)): ?>
@@ -143,7 +187,6 @@ function listaAvatarUrl(?string $val, string $username): string {
             ?>
             <div class="lt-card" onclick="location.href='/Pulse/lista?id=<?= (int)$l['IDLista'] ?>'">
 
-                <!-- Stack poster stile Letterboxd -->
                 <div class="lt-card-covers lt-covers-<?= count($covers) ?>">
                     <?php if (empty($covers)): ?>
                         <div class="lt-cover-placeholder">
@@ -154,9 +197,8 @@ function listaAvatarUrl(?string $val, string $username): string {
                     <?php endforeach; endif; ?>
                 </div>
 
-                <!-- Info -->
                 <div class="lt-card-body">
-                    <?php if ($filtro === 'seguiti'): ?>
+                    <?php if ($filtro !== 'mie'): ?>
                     <div class="lt-card-author">
                         <img src="<?= htmlspecialchars(listaAvatarUrl($l['Avatar_URL'] ?? null, $l['Username'])) ?>"
                              alt="" class="lt-author-avatar">
@@ -170,7 +212,9 @@ function listaAvatarUrl(?string $val, string $username): string {
                     <?php endif; ?>
                     <div class="lt-card-meta">
                         <span><i class="bi bi-film"></i> <?= (int)$l['TotaleFilm'] ?> film</span>
-                        <?php if ($isOwn): ?>
+                        <?php if ($filtro === 'condivise'): ?>
+                            <span class="lt-card-shared"><i class="bi bi-people-fill"></i> Membro</span>
+                        <?php elseif ($isOwn): ?>
                             <span class="lt-card-mine"><i class="bi bi-pencil"></i> Modifica</span>
                         <?php endif; ?>
                     </div>
@@ -183,7 +227,7 @@ function listaAvatarUrl(?string $val, string $username): string {
     </main>
 </div>
 
-<!-- ── MODAL CREA LISTA ───────────────────────────────────────────── -->
+<!-- ── MODAL CREA LISTA ── -->
 <div id="lt-create-modal" class="lt-modal-overlay" onclick="closeCreateModal(event)">
     <div class="lt-modal-box">
         <button class="lt-modal-close" onclick="closeCreateModal(null)">
@@ -193,7 +237,6 @@ function listaAvatarUrl(?string $val, string $username): string {
             <i class="bi bi-plus-circle" style="color:var(--accent)"></i>
             Nuova lista
         </h2>
-
         <div class="lt-form-group">
             <label class="lt-form-label">Titolo *</label>
             <input type="text" id="lt-new-titolo" class="lt-form-input"
@@ -204,7 +247,6 @@ function listaAvatarUrl(?string $val, string $username): string {
             <textarea id="lt-new-desc" class="lt-form-textarea"
                       placeholder="Una breve descrizione della tua lista…" maxlength="255" rows="3"></textarea>
         </div>
-
         <div class="lt-modal-footer">
             <button class="lt-btn-ghost" onclick="closeCreateModal(null)">Annulla</button>
             <button class="lt-btn-accent" id="lt-create-submit" onclick="submitCreate()">
@@ -214,8 +256,32 @@ function listaAvatarUrl(?string $val, string $username): string {
     </div>
 </div>
 
-<!-- ── TOAST ──────────────────────────────────────────────────────── -->
 <div id="lt-toast" class="lt-toast"></div>
+
+<style>
+.lt-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 9px;
+    font-size: 10px;
+    font-weight: 800;
+    margin-left: 2px;
+}
+.lt-card-shared {
+    font-size: 11px;
+    color: #60a5fa;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+</style>
 
 <script>
 const BACKEND = '/Pulse/backend/GestioneListe.php';
@@ -228,17 +294,20 @@ function showToast(msg, type = 'ok') {
     t._timer = setTimeout(() => t.className = 'lt-toast', 3000);
 }
 
-// ── Modale crea ──────────────────────────────
+// ── Modale — usa classe "open" come definita nel CSS ──────────────
 function openCreateModal() {
     document.getElementById('lt-create-modal').classList.add('open');
-    document.getElementById('lt-new-titolo').focus();
     document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('lt-new-titolo').focus(), 60);
 }
+
 function closeCreateModal(e) {
+    // Chiude solo se si clicca l'overlay (non il box interno)
     if (e && e.target !== document.getElementById('lt-create-modal')) return;
     document.getElementById('lt-create-modal').classList.remove('open');
     document.body.style.overflow = '';
 }
+
 async function submitCreate() {
     const titolo = document.getElementById('lt-new-titolo').value.trim();
     const desc   = document.getElementById('lt-new-desc').value.trim();
@@ -246,6 +315,8 @@ async function submitCreate() {
 
     const btn = document.getElementById('lt-create-submit');
     btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Creazione…';
+
     try {
         const res  = await fetch(BACKEND, {
             method: 'POST',
@@ -254,15 +325,14 @@ async function submitCreate() {
         });
         const json = await res.json();
         if (!json.ok) throw new Error(json.error ?? 'Errore');
-        // Naviga alla lista appena creata
         window.location.href = '/Pulse/lista?id=' + json.lista_id;
     } catch (err) {
         showToast(err.message, 'error');
         btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-plus-lg"></i> Crea lista';
     }
 }
 
-// Enter nel titolo → submit
 document.getElementById('lt-new-titolo')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') submitCreate();
 });
