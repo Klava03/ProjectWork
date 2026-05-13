@@ -10,6 +10,11 @@ function homeAvatarUrl(?string $val, string $username): string {
     return $val ?? "https://ui-avatars.com/api/?name=" . urlencode($username) . "&background=8b5cf6&color=fff&size=80";
 }
 
+$_rawAv = $_SESSION['avatar_url'] ?? null;
+$myAvatarUrl = !$_rawAv
+    ? "https://ui-avatars.com/api/?name=" . urlencode($_SESSION['username'] ?? 'U') . "&background=8b5cf6&color=fff&size=80"
+    : (str_starts_with($_rawAv, 'http') ? $_rawAv : '/Pulse/IMG/avatars/' . $_rawAv);
+
 // ── Conta seguiti ────────────────────────────────────────────────
 $stmtSeg = $pdo->prepare("SELECT COUNT(*) FROM Segui WHERE IDSeguitore = ?");
 $stmtSeg->execute([$my_id]);
@@ -72,6 +77,9 @@ $stmtSug = $pdo->prepare("
 $stmtSug->execute([$my_id, $my_id]);
 $suggeriti = $stmtSug->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
+<link rel="stylesheet" href="/Pulse/CSS/Community.css">
+<script src="/Pulse/JS/commenti.js" defer></script>
 
 <div class="app">
     <?php require 'aside.php'; ?>
@@ -199,8 +207,34 @@ $suggeriti = $stmtSug->fetchAll(PDO::FETCH_ASSOC);
                         <?php else: ?>
                         <span class="hf-no-rec"><i class="bi bi-pencil"></i> Solo log</span>
                         <?php endif; ?>
+                        <button class="hf-btn hf-btn-ghost hf-comm-toggle"
+                    data-log="<?= (int)$p['log_id'] ?>">
+                <i class="bi bi-chat"></i>
+                <span data-comm-badge="log-<?= (int)$p['log_id'] ?>">0</span>
+            </button>
                     </div>
                 </div>
+
+                    <div class="hf-comments-box" style="display:none">
+        <section class="cm-section" data-target-tipo="log" data-target-id="<?= (int)$p['log_id'] ?>">
+            <div class="cm-composer">
+                <img src="<?= htmlspecialchars($myAvatarUrl) ?>" alt="" class="cm-avatar cm-avatar-sm">
+                <div class="cm-composer-body">
+                    <textarea class="cm-textarea cm-main-input"
+                        placeholder="Commenta questo log…" rows="1" maxlength="2000"></textarea>
+                    <div class="cm-composer-footer">
+                        <span class="cm-counter"><span class="cm-counter-val">0</span>/2000</span>
+                        <button type="button" class="cm-send-btn" disabled>
+                            <i class="bi bi-send-fill"></i> Invia
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="cm-list">
+                <div class="cm-loading"><i class="bi bi-arrow-repeat cm-spin"></i></div>
+            </div>
+        </section>
+    </div>
 
             </article>
             <?php endforeach; ?>
@@ -329,4 +363,39 @@ function closeReview(e) {
     document.body.style.overflow = '';
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeReview(null); });
+
+/* ── Toggle commenti nel feed ─── */
+document.querySelectorAll('.hf-comm-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const logId = btn.dataset.log;
+        const box = btn.closest('.hf-post').querySelector('.hf-comments-box');
+        const isOpen = box.style.display !== 'none';
+        box.style.display = isOpen ? 'none' : '';
+        btn.classList.toggle('active', !isOpen);
+
+        if (!isOpen && !box.dataset.init) {
+            box.dataset.init = '1';
+            // Inizializza sezione
+            const section = box.querySelector('.cm-section');
+            if (window.PulseCommenti) window.PulseCommenti.init(section);
+        }
+    });
+});
+
+// Carica conteggi commenti per ogni post del feed
+document.querySelectorAll('.hf-post[data-log]').forEach(async post => {
+    const logId = +post.dataset.log;
+    try {
+        const r = await fetch('/Pulse/backend/GestioneCommenti.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'conteggi', tipo: 'log', id: logId })
+        });
+        const j = await r.json();
+        if (j.ok) {
+            const badge = post.querySelector(`[data-comm-badge="log-${logId}"]`);
+            if (badge) badge.textContent = j.commenti;
+        }
+    } catch {}
+});
 </script>

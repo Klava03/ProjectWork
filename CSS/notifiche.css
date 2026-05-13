@@ -400,3 +400,8 @@
     .notif-filter-btn { white-space: nowrap; }
     .notif-ago { display: none; }
 }
+
+.notif-dot-nuovo_post           { background: rgba(139,92,246,.8); }
+.notif-dot-iscrizione_community { background: rgba(34,197,94,.8); }.notif-dot-commento_log,
+.notif-dot-commento_post,
+.notif-dot-commento_lista { background: rgba(34, 211, 238, .85); } /* cyan */

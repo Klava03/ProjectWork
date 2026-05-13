@@ -565,3 +565,13 @@
 
 /* Caption shifted per backdrop con poster overlay */
 .hf-media-caption.shifted { left: 100px; }
+/* ── Commenti nel feed ── */
+.hf-comments-box {
+    border-top: 1px solid var(--line);
+    animation: cmSlideDown .2s ease;
+}
+.hf-btn.active {
+    background: rgba(139,92,246,.12);
+    color: var(--accent);
+    border-color: rgba(139,92,246,.3);
+}

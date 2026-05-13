@@ -79,6 +79,7 @@ $pageCSS = match($page) {
     'home'                        => 'CSS/HomeFeed.css',    
     'liste', 'lista'              => 'CSS/Liste.css',
     'notifiche'                   => 'CSS/Notifiche.css',
+    'community'                   => 'CSS/Community.css', 
     default                       => null,
 };
 

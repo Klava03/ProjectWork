@@ -796,3 +796,22 @@
 }
  
 .spin { animation: spin .6s linear infinite; display: inline-block; }
+
+/* ── Sezione commenti lista ── */
+.lt-comments-section {
+    margin-top: 40px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+}
+.lt-comments-header { margin-bottom: 16px; }
+.lt-comments-title {
+    font-size: 16px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+}
+.lt-comments-title i { color: var(--accent); }
+.lt-comments-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 22px; height: 22px; padding: 0 6px;
+    background: rgba(139,92,246,.15); color: var(--accent);
+    border-radius: 11px; font-size: 12px; font-weight: 800;
+}
